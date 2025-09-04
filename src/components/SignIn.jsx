@@ -5,14 +5,12 @@ import { auth } from "../firebase";
 import logo from "../assets/bogo.png";
 import eyeIcon from "../assets/Eye Open.png";
 import signinImage from "../assets/signin.png";
-import logoo from "../assets/logo.png";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState("");
-  const [enabled, setEnabled] = useState(true); // ✅ Toggle state
 
   const navigate = useNavigate();
 
@@ -36,7 +34,9 @@ export default function SignIn() {
         <div className="w-full max-w-md bg-[#0d0d0d] p-6 sm:p-8 rounded-xl shadow-lg text-white">
           {/* Logo */}
           <div className="flex items-center gap-4 mb-6">
-            <span className="font-semibold text-lg sm:text-xl"><img src={logo} alt="Easistar Logo" /></span>
+            <span className="font-semibold text-lg sm:text-xl">
+              <img src={logo} alt="Easistar Logo" />
+            </span>
           </div>
 
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1">
@@ -53,18 +53,18 @@ export default function SignIn() {
           <input
             type="email"
             placeholder="example@email.com"
-            className="w-full p-3 mb-5 rounded border border-gray-700 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 mb-5 rounded border border-gray-700 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8BC255]"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           {/* Password Input */}
           <label className="block mb-1 text-sm">Password</label>
-          <div className="relative mb-5">
+          <div className="relative mb-3">
             <input
               type={passwordVisible ? "text" : "password"}
               placeholder="Enter your password"
-              className="w-full p-3 rounded border border-gray-700 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 pr-10"
+              className="w-full p-3 rounded border border-gray-700 bg-transparent text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8BC255] pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -78,27 +78,20 @@ export default function SignIn() {
             </button>
           </div>
 
-          {/* ✅ Yes / No Toggle */}
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-sm">Remember Me</span>
-            <button
-              onClick={() => setEnabled(!enabled)}
-              className={`${
-                enabled ? "bg-green-500" : "bg-gray-400"
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+          {/* Forgot Password Link */}
+          <div className="flex justify-end mb-6">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-[#8BC255] hover:underline"
             >
-              <span
-                className={`${
-                  enabled ? "translate-x-6" : "translate-x-1"
-                } inline-block h-4 w-4 transform rounded-full bg-white transition`}
-              />
-            </button>
+              Forgot Password?
+            </Link>
           </div>
 
           {/* Sign In Button */}
           <button
             onClick={handleLogin}
-            className="w-full bg-green-500 hover:bg-green-600 transition text-black font-semibold py-3 rounded mb-6 text-sm sm:text-base"
+            className="w-full bg-[#8BC255] hover:bg-green-600 transition text-black font-semibold py-3 rounded mb-6 text-sm sm:text-base"
           >
             Sign In
           </button>
@@ -106,7 +99,7 @@ export default function SignIn() {
           {/* Register Link */}
           <p className="text-gray-400 text-xs sm:text-sm text-center">
             Don&apos;t have an account?{" "}
-            <Link to="/register" className="text-green-500 hover:underline">
+            <Link to="/register" className="text-[#8BC255] hover:underline">
               Register
             </Link>
           </p>

@@ -28,8 +28,7 @@ import DashboardHome from "./components/Administration/DashboardHome";
 import Dashboard from "./components/Administration/Dashboard";
 
 import SignIn from "./components/SignIn";
-import Forgot from "./components/Forget";
-import ForgetPassword from "./components/ForgotPassword";
+import ForgotPassword from "./components/Forget.jsx"; // ✅ Correct import
 import Register from "./components/Register";
 
 function ProtectedRoute({ children }) {
@@ -54,8 +53,7 @@ const App = () => {
       <Routes>
         {/* Auth Routes */}
         <Route path="/" element={<SignIn />} />
-        <Route path="/forgot" element={<Forgot />} />
-        <Route path="/new-password" element={<ForgetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} /> {/* ✅ Updated route */}
         <Route path="/register" element={<Register />} />
 
         {/* Protected Dashboard Routes */}
