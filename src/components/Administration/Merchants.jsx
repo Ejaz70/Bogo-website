@@ -1,16 +1,21 @@
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
-import comLogo from "../../assets/com.png"; // fallback logo for images
+import comLogo from "../../assets/com.png";
 import { Search } from "lucide-react";
+import aImg from "../../assets/a.png";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
-/* =========================================================
-   COLORS
-========================================================= */
-const VERIFIED_COLORS = {
-  banned: "#ef4444",
-  verified: "#22c55e",
-  notVerified: "#7c3aed",
-};
+// CDN TopoJSON
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+// ==== small-card images ====
+import imgCard1 from "../../assets/d.png";
+import imgCard2 from "../../assets/f.png";
+import imgCard3 from "../../assets/b.png";
+import imgCard4 from "../../assets/c.png";
+
+/* ================= COLORS ================= */
+const VERIFIED_COLORS = { banned: "#ef4444", verified: "#22c55e", notVerified: "#7c3aed" };
 const SPENT_COLORS = {
   restaurants: "#22c55e",
   hotels: "#ef4444",
@@ -20,11 +25,13 @@ const SPENT_COLORS = {
   coupon: "#9ca3af",
 };
 
-/* =========================================================
-   PRIMITIVES
-========================================================= */
-const Card = ({ className = "", children }) => (
-  <div className={`rounded-2xl border border-white/5 bg-[#1b1b1b] shadow-sm ${className}`}>
+/* ================= HELPERS ================= */
+const BASE_LEFT = 270; // figma offset
+const n = (x) => x;
+
+/* ================= PRIMITIVES ================= */
+const Card = ({ children, style, className = "" }) => (
+  <div className={`absolute border border-white/4 shadow-sm overflow-hidden ${className}`} style={style}>
     {children}
   </div>
 );
@@ -46,163 +53,82 @@ const SearchField = () => (
   </div>
 );
 
-const PctLabel = ({ children, side = "left", x = "0%", y = "0%" }) => {
-  const isLeft = side === "left";
+/* ================= TOP (PIXEL-LOCKED) CARDS ================= */
+function BestSaler() {
   return (
-    <div className="absolute text-white text-sm" style={{ [isLeft ? "left" : "right"]: x, top: y }}>
-      <div className="relative">
-        {isLeft ? (
-          <>
-            <span className="absolute -right-[28px] top-[10px] block h-px w-[26px] bg-white/70" />
-            <span className="absolute -right-[34px] top-[8px] block h-2 w-2 rounded-full bg-white" />
-          </>
-        ) : (
-          <>
-            <span className="absolute -left-[28px] top-[10px] block h-px w-[26px] bg-white/70" />
-            <span className="absolute -left-[34px] top-[8px] block h-2 w-2 rounded-full bg-white" />
-          </>
-        )}
-        {children}
-      </div>
-    </div>
-  );
-};
-
-const Callout = ({ side = "right", style, children }) => {
-  const isLeft = side === "left";
-  return (
-    <div className="pointer-events-none absolute text-white/90 text-xs" style={style}>
-      <div className="relative">
-        {children}
-        {isLeft ? (
-          <>
-            <span className="absolute -right-[52px] top-[8px] block h-px w-[48px] bg-white/70" />
-            <span className="absolute -right-[58px] top-[5px] block h-2 w-2 rounded-full bg-white" />
-          </>
-        ) : (
-          <>
-            <span className="absolute -left-[52px] top-[8px] block h-px w-[48px] bg-white/70" />
-            <span className="absolute -left-[58px] top-[5px] block h-2 w-2 rounded-full bg-white" />
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/* Small stat card with optional image INSIDE */
-const SmallStatCard = ({ title, value, delta, icon, imgSrc, className = "" }) => (
-  <div className={`rounded-xl bg-[#101010] border border-white/5 p-3 flex items-center gap-3 ${className}`}>
-    {imgSrc ? (
-      <img src={imgSrc} alt="mini" className="h-9 w-9 rounded-lg object-cover" />
-    ) : (
-      <div className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-white/90 text-sm">{icon ?? "★"}</div>
-    )}
-    <div className="flex-1">
-      <div className="text-[11px] text-white/70 leading-none">{title}</div>
-      <div className="mt-1 flex items-center gap-2">
-        <span className="text-white font-semibold text-sm">{value}</span>
-        {delta != null && (
-          <span className={`text-[10px] ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-            {delta >= 0 ? "+" : ""}{delta}%
-          </span>
-        )}
-      </div>
-    </div>
-  </div>
-);
-
-/* =========================================================
-   TOP STRIP WIDGETS — equalized heights
-========================================================= */
-function BestSaler({ className = "" }) {
-  return (
-    <Card className={className}>
-      <div className="p-4 h-full grid grid-rows-[auto_1fr_auto]">
-        <div className="text-sm font-semibold text-white/90">Best saler</div>
-        <div className="mt-2 grid place-items-center">
-          <div className="h-20 w-20 rounded-full bg-yellow-400/90 grid place-items-center text-black text-xl font-bold shadow">🦸‍♂️</div>
+    <Card
+      style={{
+        width: n(128),
+        top: n(-21),
+        height: n(185),
+        left: n(243 - BASE_LEFT),
+        borderRadius: n(5),
+        opacity: 1,
+        background: "#FFC02D",
+      }}
+    >
+      <div className="p-3 h-full flex flex-col items-center justify-between text-black">
+        <div className="mt-1 h-14 w-14 rounded-full bg-white grid place-items-center shadow overflow-hidden">
+          <img src={aImg} alt="Best seller" className="h-10 w-10 object-contain" />
         </div>
-        <button className="mt-4 inline-flex items-center justify-between rounded-xl bg-[#F5C242] px-4 py-2 font-semibold text-black">
-          <span>Best saler</span>
-          <span className="ml-3 grid h-6 w-6 place-items-center rounded-full bg-white/90">▶</span>
+        <div className="text-xs font-semibold">Best saler</div>
+        <button className="mb-1 h-8 w-8 rounded-full bg-[#FFFFFF80] flex items-center justify-center">
+          <span className="text-black text-sm">{">"}</span>
         </button>
       </div>
     </Card>
   );
 }
 
-function TopLocation({ className = "" }) {
+function TopLocation() {
+  const [selected, setSelected] = React.useState(new Set());
+  const toggle = (id) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   return (
-    <Card className={className}>
-      <div className="p-4">
+    <Card
+      style={{
+        width: n(266),
+        height: n(185),
+        top: n(-21),
+        left: n(380 - BASE_LEFT),
+        borderRadius: n(5),
+        opacity: 1,
+        background: "#292929",
+      }}
+      className="relative"
+    >
+      <div className="p-3 h-full">
         <div className="text-sm font-semibold text-white/90">Top location</div>
-        <div className="mt-2 relative h-[180px] rounded-xl bg-[#101010] overflow-hidden">
-          <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_20%_30%,#2a2a2a_0%,transparent_30%),radial-gradient(circle_at_80%_60%,#2a2a2a_0%,transparent_30%)]" />
-          <span className="absolute left-[22%] top-[38%] h-3 w-3 rounded-full bg-yellow-400 shadow" />
-          <span className="absolute left-[66%] top-[60%] h-3 w-3 rounded-full bg-emerald-400 shadow" />
-        </div>
-      </div>
-    </Card>
-  );
-}
 
-function VerifiedAccount({ className = "" }) {
-  const data = [
-    { name: "virified", value: 70, color: VERIFIED_COLORS.verified },
-    { name: "Banned", value: 20, color: VERIFIED_COLORS.banned },
-    { name: "Not verified", value: 10, color: VERIFIED_COLORS.notVerified },
-  ];
-  return (
-    <Card className={className}>
-      <div className="p-4 h-full">
-        <div className="text-sm font-semibold text-white/90">virified account</div>
-        <div className="relative mx-auto mt-3 w-full h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={44}
-                outerRadius={80}
-                paddingAngle={4}
-                cornerRadius={12}
-                dataKey="value"
-                stroke="none"
-              >
-                {data.map((d, i) => (
-                  <Cell key={i} fill={d.color} />
-                ))}
-                <Label
-                  position="center"
-                  content={({ viewBox }) => {
-                    const { cx, cy } = viewBox || {};
+        <div className="mt-2 relative h-[120px] rounded-md bg-[#101010] overflow-hidden">
+          <div className="absolute inset-0">
+            <ComposableMap projection="geoMercator" projectionConfig={{ scale: 80 }} style={{ width: "100%", height: "100%" }}>
+              <Geographies geography={geoUrl}>
+                {({ geographies }) =>
+                  geographies.map((geo) => {
+                    const id = geo.id || geo.properties.ISO_A3 || geo.rsmKey;
+                    const isSel = selected.has(id);
                     return (
-                      <g>
-                        <text x={cx} y={(cy || 0) - 4} textAnchor="middle" className="fill-white" style={{ fontSize: 20, fontWeight: 800 }}>1500</text>
-                        <text x={cx} y={(cy || 0) + 16} textAnchor="middle" className="fill-white/70" style={{ fontSize: 11 }}>accounts</text>
-                      </g>
+                      <Geography
+                        key={id}
+                        geography={geo}
+                        onClick={() => toggle(id)}
+                        style={{
+                          default: { fill: isSel ? "#93c5fd" : "#0a0a0a", stroke: "#22c3ff", strokeWidth: 0.6, outline: "none" },
+                          hover:   { fill: isSel ? "#93c5fd" : "#1a1a1a", stroke: "#22c3ff", strokeWidth: 0.6, outline: "none", cursor: "pointer" },
+                          pressed: { fill: "#93c5fd", stroke: "#22c3ff", strokeWidth: 0.6, outline: "none" },
+                        }}
+                      />
                     );
-                  }}
-                />
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-
-          {/* callouts */}
-          <Callout side="right" style={{ right: "2%", top: "12%" }}>
-            <b>10%</b> <span className="text-white/70">Not verified</span>
-          </Callout>
-          <Callout side="left" style={{ left: "2%", bottom: "16%" }}>
-            <b>90</b> <span className="text-white/70">virified</span>
-          </Callout>
-
-          {/* legend */}
-          <div className="absolute bottom-2 right-3 flex flex-col gap-1 text-[11px] text-white/85">
-            <LegendDot color={VERIFIED_COLORS.banned} label="Banned" />
-            <LegendDot color={VERIFIED_COLORS.verified} label="virified" />
-            <LegendDot color={VERIFIED_COLORS.notVerified} label="Not verified" />
+                  })
+                }
+              </Geographies>
+            </ComposableMap>
           </div>
         </div>
       </div>
@@ -210,7 +136,111 @@ function VerifiedAccount({ className = "" }) {
   );
 }
 
-function SpantChart({ className = "" }) {
+function VerifiedAccount() {
+  const data = [
+    { name: "verified", value: 70, color: VERIFIED_COLORS.verified },
+    { name: "Banned", value: 20, color: VERIFIED_COLORS.banned },
+    { name: "Not verified", value: 10, color: VERIFIED_COLORS.notVerified },
+  ];
+
+  const PointerLabels = (props) => {
+    const { cx, cy, midAngle, outerRadius, index, percent } = props || {};
+    if (cx == null || cy == null || outerRadius == null || midAngle == null) return null;
+    const RAD = Math.PI / 180;
+
+    const r0 = outerRadius;
+    const r1 = outerRadius + 12;
+
+    const x0 = cx + r0 * Math.cos(-midAngle * RAD);
+    const y0 = cy + r0 * Math.sin(-midAngle * RAD);
+    const x1 = cx + r1 * Math.cos(-midAngle * RAD);
+    const y1 = cy + r1 * Math.sin(-midAngle * RAD);
+
+    const isRight = Math.cos(-midAngle * RAD) >= 0;
+    const x2 = x1 + (isRight ? 16 : -16);
+    const y2 = y1;
+
+    const item = data[index];
+    if (!item) return null;
+
+    if (item.name === "verified" || item.name === "Not verified") {
+      const text = item.name === "verified" ? "90 verified" : `${Math.round((percent || 0) * 100)}% Not verified`;
+      const anchor = isRight ? "start" : "end";
+      return (
+        <g>
+          <circle cx={x0} cy={y0} r={3.2} fill="#fff" fillOpacity={0.9} />
+          <polyline points={`${x0},${y0} ${x1},${y1} ${x2},${y2}`} stroke="#d1d5db" strokeWidth={1} fill="none" />
+          <text x={x2 + (isRight ? 4 : -4)} y={y2 - 2} textAnchor={anchor} fontSize={11} fill="#ffffff">
+            {text}
+          </text>
+        </g>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <Card
+      style={{
+        width: n(266),
+        height: n(186),
+        top: n(-21),
+        left: n(652 - BASE_LEFT),
+        borderRadius: n(5),
+        opacity: 1,
+        background: "#292929",
+      }}
+    >
+      <div className="p-3 h-full">
+        <div className="text-sm font-semibold text-white/90">verified account</div>
+
+        <div className="relative mx-auto mt-2 w-full h-[120px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={34}
+                outerRadius={54}
+                paddingAngle={4}
+                cornerRadius={9}
+                dataKey="value"
+                stroke="none"
+                labelLine={false}
+                label={PointerLabels}
+              >
+                {data.map((d, i) => (
+                  <Cell key={i} fill={d.color} />
+                ))}
+
+                <Label
+                  position="center"
+                  content={({ viewBox }) => {
+                    const { cx, cy } = viewBox || {};
+                    if (cx == null || cy == null) return null;
+                    return (
+                      <g>
+                        <text x={cx} y={cy - 2} textAnchor="middle" className="fill-white" style={{ fontSize: 14, fontWeight: 800 }}>
+                          1500
+                        </text>
+                        <text x={cx} y={cy + 12} textAnchor="middle" className="fill-white/70" style={{ fontSize: 9 }}>
+                          account
+                        </text>
+                      </g>
+                    );
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function SpantChart() {
   const data = [
     { name: "restaurants", value: 20, color: SPENT_COLORS.restaurants },
     { name: "hotels", value: 10, color: SPENT_COLORS.hotels },
@@ -219,69 +249,85 @@ function SpantChart({ className = "" }) {
     { name: "sport", value: 30, color: SPENT_COLORS.sport },
     { name: "coupon", value: 10, color: SPENT_COLORS.coupon },
   ];
+
+  const RAD = Math.PI / 180;
+  const renderLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
+    const r = outerRadius + 8;
+    const sx = cx + r * Math.cos(-midAngle * RAD);
+    const sy = cy + r * Math.sin(-midAngle * RAD);
+    const mx = cx + (r + 11) * Math.cos(-midAngle * RAD);
+    const my = cy + (r + 12) * Math.sin(-midAngle * RAD);
+    const ex = mx + (Math.cos(-midAngle * RAD) >= 0 ? 14 : -14);
+    const ey = my;
+
+    const textAnchor = Math.cos(-midAngle * RAD) >= 0 ? "start" : "end";
+    const pct = `${Math.round(percent * 100)}%`;
+
+    return (
+      <g>
+        <circle cx={sx} cy={sy} r={3} fill="#ffffff" opacity={0.9} />
+        <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke="#ffffff" fill="none" opacity={0.65} />
+        <text x={ex + (textAnchor === "start" ? 4 : -4)} y={ey} dy="0.35em" fill="#ffffff" fontSize="12" textAnchor={textAnchor}>
+          {pct}
+        </text>
+      </g>
+    );
+  };
+
   return (
-    <Card className={className}>
-      <div className="py-4">
-        <div className="text-sm font-semibold text-white/90">Spant Chart</div>
-        {/* Equal height container to match VerifiedAccount */}
-        <div className="relative mx-auto mt-3 w-full h-[330px]">
+    <Card
+      style={{
+        width: n(271.96209716796875),
+        height: n(310),
+        top: n(-21),
+        left: n(926 - BASE_LEFT),
+        borderRadius: n(5.68),
+        opacity: 1,
+        background: "#292929",
+      }}
+    >
+      <div className="p-1 h-full">
+        <div className="text-x font-bold text-white">Spant Chart</div>
+
+        <div className="relative mx-auto mt-1 w-full h-[180px]">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ left: -33, right: 2 }}>
+              <Pie data={[{ value: 100 }]} dataKey="value" cx="58%" cy="52%" outerRadius={54} stroke="none" fill="#1f1f1f" />
               <Pie
                 data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={56}
-                outerRadius={86}
-                paddingAngle={6}
-                cornerRadius={12}
+                cx="58%"
+                cy="52%"
+                innerRadius={48}
+                outerRadius={78}
+                paddingAngle={0}
+                cornerRadius={3}
                 dataKey="value"
                 stroke="none"
+                label={renderLabel}
+                labelLine={false}
               >
                 {data.map((d, i) => (
                   <Cell key={i} fill={d.color} />
                 ))}
               </Pie>
-              {/* inner ring */}
-              <Pie
-                data={[{ value: 100 }]}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={48}
-                dataKey="value"
-                fill="#0f0f0f"
-                stroke="#1a1a1a"
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
             </PieChart>
           </ResponsiveContainer>
+        </div>
 
-          {/* labels */}
-          <PctLabel side="left" x="12%" y="6%">20%</PctLabel>
-          <PctLabel side="right" x="12%" y="8%">10%</PctLabel>
-          <PctLabel side="right" x="3%" y="42%">15%</PctLabel>
-          <PctLabel side="right" x="10%" y="84%">30%</PctLabel>
-          <PctLabel side="left" x="12%" y="80%">15%</PctLabel>
-          <PctLabel side="left" x="3%" y="44%">10%</PctLabel>
-
-          {/* legend */}
-          <div className="absolute bottom-2 left-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-[11px] text-white/90">
-            <LegendDot color={SPENT_COLORS.restaurants} label="restaurants" />
-            <LegendDot color={SPENT_COLORS.hotels} label="hotels" />
-            <LegendDot color={SPENT_COLORS.beauty} label="beauty" />
-            <LegendDot color={SPENT_COLORS.entertainment} label="entertainment" />
-            <LegendDot color={SPENT_COLORS.sport} label="sport" />
-            <LegendDot color={SPENT_COLORS.coupon} label="coupon" />
-          </div>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-[11px] text-gray-300">
+          {data.map((item) => (
+            <span key={item.name} className="flex items-center gap-1 capitalize">
+              <span className="inline-block w-3 h-3 rounded-[3px]" style={{ backgroundColor: item.color }} />
+              {item.name}
+            </span>
+          ))}
         </div>
       </div>
     </Card>
   );
 }
 
-function StatisticSliders({ className = "" }) {
+function StatisticSliders() {
   const rows = [
     { label: "entertainment", v: 20, color: "#8b5cf6" },
     { label: "spa", v: 100, color: "#60a5fa" },
@@ -292,9 +338,19 @@ function StatisticSliders({ className = "" }) {
     { label: "coupon", v: 600, color: "#9ca3af" },
   ];
   return (
-    <Card className={className}>
+    <Card
+      style={{
+        width: n(163),
+        height: n(310),
+        top: n(-21),
+        left: n(1206 - BASE_LEFT),
+        borderRadius: n(5),
+        opacity: 1,
+        background: "#292929",
+      }}
+    >
       <div className="p-4 h-full">
-        <div className="text-sm font-semibold text-white/90">Statistic</div>
+        <div className="text-x font-bold text-white">Statistic</div>
         <div className="mt-3 space-y-3">
           {rows.map((s, i) => (
             <div key={i}>
@@ -313,9 +369,61 @@ function StatisticSliders({ className = "" }) {
   );
 }
 
-/* =========================================================
-   TABLE DATA
-========================================================= */
+/* ================= SMALL CARDS ROW (ONE LINE) ================= */
+/** Wrapper ko absolute rakha hai, aur andr flex row — equal gap + single line */
+const SMALL_ROW_TOP = 175;                         // aapka hi top
+const SMALL_ROW_LEFT = 270 - BASE_LEFT - 23;       // aapke OFFSET=23 ke hisaab se
+const SMALL_GAP = 6;                                // equal gap
+
+function SmallCardItem({ title, count, img, width, bg }) {
+  return (
+    <div
+      className="relative border border-white/4 shadow-sm overflow-hidden"
+      style={{
+        width,
+        height: n(104),
+        borderRadius: n(5.01),
+        background: bg,
+      }}
+    >
+      <img
+        src={img}
+        alt=""
+        className="absolute left-2 top-2 h-12 w-auto object-contain select-none pointer-events-none"
+        draggable={false}
+      />
+      <div className="absolute top-2 right-3 text-white text-xl font-bold leading-none">{count}</div>
+      <div className="absolute bottom-2 right-3 text-[11px] text-white/90">{title}</div>
+    </div>
+  );
+}
+
+function SmallCardsRow() {
+  const items = [
+    { title: "All merchants",      count: "1500", img: imgCard1, width: 168, bg: "#292929" },
+    { title: "Banned merchants",   count: "10",   img: imgCard2, width: 162, bg: "#8BC255" }, // only #2 green
+    { title: "Verified merchants", count: "1400", img: imgCard3, width: 162, bg: "#292929" },
+    { title: "Active merchants",   count: "1200", img: imgCard4, width: 163, bg: "#292929" },
+  ];
+
+  return (
+    <div
+      className="absolute"
+      style={{
+        top: n(SMALL_ROW_TOP),
+        left: n(SMALL_ROW_LEFT),
+      }}
+    >
+      <div className="flex" style={{ gap: `${SMALL_GAP}px` }}>
+        {items.map((it, i) => (
+          <SmallCardItem key={i} {...it} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================= TABLE ================= */
 const tableData = [
   {
     name: "Hotel ibis",
@@ -351,9 +459,6 @@ const tableData = [
   })),
 ];
 
-/* =========================================================
-   TABLE
-========================================================= */
 function MerchantsTable() {
   const ArrowBtn = () => (
     <button type="button" className="grid h-8 w-12 place-items-center rounded-full bg-white text-black shadow-sm" aria-label="Open row">
@@ -376,9 +481,15 @@ function MerchantsTable() {
     <div className="flex items-center gap-2 px-2 min-w-0 h-full bg-[#1a1a1a]">
       <img src={row.logo || comLogo} alt="logo" className="h-8 w-8 flex-shrink-0 rounded-lg object-cover" />
       <div className="min-w-0">
-        <div className="truncate text-[11px] font-medium leading-5" title={row.name}>{row.name}</div>
-        <div className="text-[9.5px] text-white/55 truncate" title={row.email}>{row.email}</div>
-        <div className="text-[9.5px] text-white/55 truncate" title={row.number}>{row.number}</div>
+        <div className="truncate text-[11px] font-medium leading-5" title={row.name}>
+          {row.name}
+        </div>
+        <div className="text-[9.5px] text-white/55 truncate" title={row.email}>
+          {row.email}
+        </div>
+        <div className="text-[9.5px] text-white/55 truncate" title={row.number}>
+          {row.number}
+        </div>
       </div>
     </div>
   );
@@ -404,13 +515,8 @@ function MerchantsTable() {
 
           {tableData.map((row, i) => {
             const st = String(row.status || "").trim().toLowerCase();
-            const renderStatus = st.includes("not")
-              ? "Not verified"
-              : st === "verified"
-              ? "verified"
-              : st === "banned"
-              ? "Banned"
-              : row.status || "—";
+            const renderStatus =
+              st.includes("not") ? "Not verified" : st === "verified" ? "verified" : st === "banned" ? "Banned" : row.status || "—";
             return (
               <div key={i} className={`${COLS} items-center border-t border-white/10 bg-[#0F0F0F]`}>
                 <BrandCell row={row} />
@@ -453,50 +559,26 @@ function MerchantsTable() {
   );
 }
 
-/* =========================================================
-   PAGE
-========================================================= */
+/* ================= PAGE ================= */
 function Dashboard() {
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white">
       <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6">
-        {/* ==================== TOP STRIP (exact order like screenshot) ==================== */}
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-12">
-          {/* unified height for all 5 cards */}
-          <div className="xl:col-span-2 h-[230px]"><BestSaler className="h-full" /></div>
-          <div className="xl:col-span-4 h-[230px]"><TopLocation className="h-full" /></div>
-          <div className="xl:col-span-2 h-[230px]"><VerifiedAccount className="h-full" /></div>
-          {/* add a little gap under the last two cards */}
-          <div className="xl:col-span-2 h-[230px] mb-6"><SpantChart className="h-full" /></div>
-          <div className="xl:col-span-2 h-[230px] mb-6"><StatisticSliders className="h-full" /></div>
+        {/* HERO canvas */}
+        <div className="relative w-full mb-2" style={{ height: 420 }}>
+          {/* 5 Big cards */}
+          <BestSaler />
+          <TopLocation />
+          <VerifiedAccount />
+          <SpantChart />
+          <StatisticSliders />
+
+          {/* Small cards: always one line, equal gap */}
+          <SmallCardsRow />
         </div>
 
-        {/* ==================== MINI CARDS ==================== */}
-        {/* Place directly UNDER the first three cards area (2+4+2 = 8 cols) */}
-        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-12">
-          <div className="xl:col-span-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {/* Green All merchants */}
-            <div className="sm:col-span-2">
-              <div className="rounded-2xl border border-white/5 bg-[#3CB371] text-black p-4 relative overflow-hidden">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-black/10 grid place-items-center text-xl">🛒</div>
-                  <div>
-                    <div className="text-xs font-semibold opacity-90">All merchants</div>
-                    <div className="text-2xl font-extrabold leading-tight">1500</div>
-                  </div>
-                </div>
-                <img src={comLogo} alt="decor" className="absolute right-3 bottom-3 h-10 w-10 opacity-70 rounded-lg object-cover" />
-              </div>
-            </div>
-            <SmallStatCard title="banned merchants" value="10" delta={-2} imgSrc={comLogo} />
-            <SmallStatCard title="verified merchants" value="1400" delta={6} imgSrc={comLogo} />
-            <SmallStatCard title="Active merchants" value="—" delta={4} imgSrc={comLogo} />
-          </div>
-          {/* keep remaining 4 columns empty to sit under the last two tall cards */}
-        </div>
-
-        {/* FILTERS */}
-        <div className="mb-4 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between whitespace-nowrap">
+        {/* Filters */}
+        <div className="mb-2 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between whitespace-nowrap">
           <SearchField />
           <div className="flex flex-wrap items-center gap-3">
             <select className="w-40 rounded-md border border-white/10 bg-[#1A1A1A] px-4 py-2 text-sm">
@@ -508,16 +590,19 @@ function Dashboard() {
             <select className="w-32 rounded-md border border-white/10 bg-[#1A1A1A] px-4 py-2 text-sm">
               <option>All</option>
               <option>Not verified</option>
-              <option>virified</option>
+              <option>verified</option>
               <option>Banned</option>
             </select>
             <button className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2 text-sm">scv</button>
             <button className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2 text-sm">pdf</button>
             <button className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2 text-sm">excle</button>
-            <button className="rounded-full bg-yellow-500 px-6 py-2 text-sm font-semibold text-black hover:bg-yellow-400">+ New merchants</button>
+            <button className="rounded-full bg-yellow-500 px-6 py-2 text-sm font-semibold text-black hover:bg-yellow-400">
+              + New merchants
+            </button>
           </div>
         </div>
 
+        {/* Table */}
         <MerchantsTable />
       </div>
     </div>
