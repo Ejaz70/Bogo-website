@@ -1,592 +1,388 @@
-import React from "react";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis } from "recharts";
-import { MoreHorizontal, MessageCircle, Phone, Ban } from "lucide-react";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Annotation,
-} from "react-simple-maps";
+import React, { useState } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Label } from "recharts";
+import { Search, ArrowUpDown } from "lucide-react";
+import comLogo from "../../assets/com.png";
 
-/* ===================== Demo Data ===================== */
-const chartData = [
-  { month: "Jan", netAmount: 600, paidAmount: 550 },
-  { month: "Feb", netAmount: 650, paidAmount: 620 },
-  { month: "Mar", netAmount: 700, paidAmount: 680 },
-  { month: "Apr", netAmount: 750, paidAmount: 720 },
-  { month: "May", netAmount: 800, paidAmount: 770 },
-  { month: "Jun", netAmount: 780, paidAmount: 750 },
-  { month: "Jul", netAmount: 820, paidAmount: 800 },
-  { month: "Aug", netAmount: 600, paidAmount: 580 },
-  { month: "Sep", netAmount: 500, paidAmount: 480 },
-  { month: "Oct", netAmount: 450, paidAmount: 430 },
-  { month: "Nov", netAmount: 500, paidAmount: 470 },
-  { month: "Dec", netAmount: 550, paidAmount: 520 },
+/* ---- image imports ---- */
+import car1 from "../../assets/a.png";   // top-left card image
+import imgD from "../../assets/d.png";   // row2 card1
+import imgF from "../../assets/f.png";   // row2 card2
+import imgB from "../../assets/b.png";   // row2 card3
+import imgC from "../../assets/c.png";   // row2 card4
+// import worldMap from "../../assets/top/world-map.png";
+
+/* ================== Chart Data ================== */
+const verifiedAccountData = [
+  { name: "verified", value: 90, color: "#7C3AED" },
+  { name: "Banned", value: 0, color: "#10b981" },
+  { name: "Not verified", value: 10, color: "#F59E0B" },
 ];
 
-const customers = [
-  { name: "Seth Daniels", username: "@sethdaniels", avatar: "👤" },
-  { name: "Myrtle Perkins", username: "@myrtleperkins", avatar: "🦄" },
-  { name: "Dominic Baker", username: "@dominicbaker", avatar: "📞" },
-  { name: "Ollie Baldwin", username: "@olliebaldwin", avatar: "👤" },
+const spentChartData = [
+  { name: "restaurants", value: 30, color: "#7C3AED" },
+  { name: "hotels", value: 10, color: "#22C55E" },
+  { name: "beauty", value: 15, color: "#F59E0B" },
+  { name: "entertainment", value: 10, color: "#06B6D4" },
+  { name: "sport", value: 15, color: "#8B5CF6" },
+  { name: "coupon", value: 20, color: "#F97316" },
 ];
 
-const newMerchants = [
-  { name: "Hotel Ibis", username: "Hotels", avatar: "🏨" },
-  { name: "Foodkite", username: "Restaurants", avatar: "🍔" },
-  { name: "Ice French", username: "Desserts", avatar: "🍨" },
-  { name: "Pizza Megia", username: "Restaurants", avatar: "🍕" },
-];
+/* ================== Demo Data ================== */
+function makeCompanies() {
+  const seed = [
+    {
+      name: "Hotel ibis",
+      email: "hotelibis@gmail.com",
+      number: "+92 300 1234567",
+      logo: "/assets/logos/hotel-ibis.png",
+      category: "hotels",
+      type: "hotel",
+      offers: "100",
+      bookings: "25",
+      loyalty: "25",
+      views: "32k",
+      likes: "300",
+      profits: "2000 $",
+      joinedOn: "12/7/2023 1:50:05 PM",
+      status: "verified",
+    },
+  ];
+  const extra = Array.from({ length: 24 }).map((_, i) => {
+    const n = i + 2;
+    return {
+      name: `Company ${n}`,
+      email: `company${n}@demo.com`,
+      number: `+92 30${(i % 9) + 1} 12${(i % 90) + 10} ${100 + i}`,
+      logo: "/assets/logos/company.png",
+      category: i % 5 === 0 ? "hotels" : i % 2 === 0 ? "restaurants" : "entertainment",
+      type: i % 2 === 0 ? "fast food" : i % 3 === 0 ? "games" : "service",
+      offers: `${(i + 1) * 7}`,
+      bookings: `${(i + 2) * 4}`,
+      loyalty: `${(i + 3) * 3}`,
+      views: `${(i % 6) * 10 + 20}k`,
+      likes: `${(i % 9) * 100 + 100}`,
+      profits: `${1200 + i * 37} $`,
+      joinedOn: `1/${(i % 12) + 1}/2024 10:${(i % 50) + 10}:05 AM`,
+      status: i % 3 === 0 ? "verified" : i % 3 === 1 ? "Banned" : "Not verified",
+    };
+  });
+  return seed.concat(extra);
+}
+const tableData = makeCompanies();
 
-const transactions = [
-  {
-    id: "#10023",
-    type: "payment",
-    amount: "+$650.00",
-    status: "Completed",
-    time: "Today, 10:30 AM",
-  },
-  {
-    id: "#10024",
-    type: "refund",
-    amount: "-$250.00",
-    status: "Completed",
-    time: "Today, 10:30 AM",
-  },
-  {
-    id: "#10025",
-    type: "failed",
-    amount: "+$128.00",
-    status: "Declined",
-    time: "Today, 10:30 AM",
-  },
-];
-
-/* ===================== Small circular ring ===================== */
-const Ring = ({ percent = 75, color = "#22c55e" }) => {
-  const size = 60;
-  const stroke = 6;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const dash = (percent / 100) * c;
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      className="-rotate-90"
-    >
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        stroke="#2f2f2f"
-        strokeWidth={stroke}
-        fill="none"
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        stroke={color}
-        strokeWidth={stroke}
-        fill="none"
-        strokeLinecap="round"
-        strokeDasharray={`${dash} ${c - dash}`}
-      />
-    </svg>
-  );
-};
-
-/* ===================== Rows ===================== */
-const PersonRow = ({ item }) => (
-  <div className="flex items-center justify-between py-3">
-    <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-full bg-white/10 grid place-items-center text-lg border border-white/10">
-        {item.avatar}
-      </div>
-      <div>
-        <div className="text-white text-sm font-medium">{item.name}</div>
-        <div className="text-white/50 text-xs">{item.username}</div>
-      </div>
-    </div>
-    <div className="flex items-center gap-2">
-      <button className="h-8 w-8 rounded-full grid place-items-center bg-white/5 border border-white/10 text-white/70 hover:text-white">
-        <MessageCircle className="h-4 w-4" />
-      </button>
-      <button className="h-8 w-8 rounded-full grid place-items-center bg-white/5 border border-white/10 text-white/70 hover:text-white">
-        <Phone className="h-4 w-4" />
-      </button>
-      <button className="h-8 w-8 rounded-full grid place-items-center bg-white/5 border border-white/10 text-white/70 hover:text-white">
-        <Ban className="h-4 w-4" />
-      </button>
-    </div>
+/* ================== Primitives ================== */
+const Card = ({ children, style, className = "" }) => (
+  <div className={`absolute border border-white/5 shadow-sm overflow-hidden rounded-[5px] ${className}`} style={style}>
+    {children}
   </div>
 );
-
-const PaymentRow = ({ tx }) => {
-  const tone =
-    tx.type === "payment" ? "green" : tx.type === "refund" ? "amber" : "red";
-  const colorMap = {
-    green: { bg: "bg-emerald-500/15", dot: "bg-emerald-400" },
-    amber: { bg: "bg-amber-500/15", dot: "bg-amber-400" },
-    red: { bg: "bg-rose-500/15", dot: "bg-rose-400" },
-  }[tone];
-
-  const title =
-    tx.type === "payment"
-      ? "Payment from"
-      : tx.type === "refund"
-      ? "Process refund to"
-      : "Payment failed from";
-
+const Dot = ({ className = "bg-white", style }) => (
+  <span className={`inline-block h-2 w-2 rounded-full ${className}`} style={style} />
+);
+const renderPercentLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
+  const RAD = Math.PI / 180;
+  const r = outerRadius + 14;
+  const x = cx + r * Math.cos(-midAngle * RAD);
+  const y = cy + r * Math.sin(-midAngle * RAD);
   return (
-    <div className="grid grid-cols-[1fr_auto_auto] items-center py-3">
-      <div className="flex items-start gap-3 pr-3">
-        <span
-          className={`h-6 w-6 rounded-full ${colorMap.bg} grid place-items-center`}
-        >
-          <span className={`h-2.5 w-2.5 rounded-full ${colorMap.dot}`} />
-        </span>
-        <div>
-          <div className="text-white text-sm">
-            {title}{" "}
-            <a href="#" className="text-sky-400 hover:underline">
-              {tx.id}
-            </a>
-          </div>
-          <div className="text-xs text-white/50">{tx.time}</div>
-        </div>
-      </div>
-      <div className="text-right font-semibold text-white text-sm px-3">
-        {tx.amount}
-      </div>
-      <div className="px-3">
-        <span
-          className={`inline-flex items-center rounded-md px-3 py-1 text-xs font-medium ${
-            tx.status === "Completed"
-              ? "bg-emerald-900 text-emerald-300"
-              : "bg-rose-900 text-rose-300"
-          }`}
-        >
-          {tx.status}
-        </span>
-      </div>
-    </div>
+    <text x={x} y={y} fill="#ccc" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central" fontSize={11}>
+      {`${Math.round(percent * 100)}%`}
+    </text>
   );
 };
 
-/* ===================== Sales Locations (react-simple-maps) ===================== */
-const SalesLocations = () => {
-  const GEO_URL =
-    "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-
-  const highlights = {
-    "United States of America": {
-      color: "#2563eb",
-      total: "12.8K",
-      flag: "🇺🇸",
-    },
-    China: { color: "#10b981", total: "5.3K", flag: "🇨🇳" },
-    Turkey: { color: "#6d28d9", total: "2.7K", flag: "🇹🇷" },
-    Brazil: { color: "#f59e0b", total: "1.0K", flag: "🇧🇷" },
-  };
-
-  const list = [
-    { rank: 1, key: "United States of America" },
-    { rank: 2, key: "China" },
-    { rank: 3, key: "Turkey" },
-    { rank: 4, key: "Brazil" },
-  ];
-
-  const [activeKey, setActiveKey] = React.useState("United States of America");
-
-  // label positions (lng, lat)
-  const centers = {
-    "United States of America": [-98, 39],
-    China: [104, 35],
-    Turkey: [35, 39],
-    Brazil: [-53, -10],
-  };
+/* ================== Card Section ================== */
+function CardSection() {
+  const [mapBlue, setMapBlue] = useState(false);
 
   return (
-    <div className="bg-[#1e1e1e] rounded-2xl p-5 mt-6">
-      <div className="text-white/80 text-sm mb-3">Sales Locations</div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3">
-        {/* Left list */}
-        <div className="lg:pr-6 border-b lg:border-b-0 lg:border-r border-white/10 pb-5 lg:pb-0">
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-3xl font-semibold text-white">21.2K</div>
-              <div className="text-sm text-white/60 -mt-1">Our customers</div>
-            </div>
-            <div className="text-emerald-400 text-sm font-medium">
-              ↑ 105.23 %
-            </div>
+    // wrap with overflow-x-hidden so absolute children (left:-18) never create scroll
+    <div className="relative w-full h-[300px] mb-6 overflow-x-hidden">
+      {/* 1) Best saler */}
+      <Card style={{ width: 128, height: 185, left: -18, background: "#FFC02D" }}>
+        <div className="h-full w-full grid grid-rows-[1fr_auto]">
+          <div className="grid place-items-center">
+            <img src={car1} className="h-[120px] object-contain" alt="best" />
           </div>
-
-          <div className="mt-4 space-y-3">
-            {list.map(({ rank, key }) => {
-              const item = highlights[key];
-              return (
-                <button
-                  key={key}
-                  onMouseEnter={() => setActiveKey(key)}
-                  className="w-full flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-xl px-3 py-2 text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-[#2e2e2e] grid place-items-center text-xs text-white/80">
-                      {rank}.
-                    </div>
-                    <span className="text-lg leading-none">{item.flag}</span>
-                    <span className="text-white text-sm font-medium">
-                      {key.replace(" of America", "")}
-                    </span>
-                  </div>
-                  <span
-                    className="text-[12px] text-white/90 px-3 py-1 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  >
-                    {item.total}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-between px-3 py-2 text-black">
+            <span className="text-sm font-semibold">Best saler</span>
+            <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90">▶</button>
           </div>
         </div>
+      </Card>
 
-        {/* Map */}
-        <div className="lg:col-span-2 lg:pl-6 pt-5 lg:pt-0">
-          <div className="rounded-xl overflow-hidden bg-[#2a2a2a]">
-            <ComposableMap
-              projectionConfig={{ scale: 145 }}
-              style={{ width: "100%", height: 360 }}
-            >
-              <Geographies geography={GEO_URL}>
-                {({ geographies }) =>
-                  geographies.map((geo) => {
-                    const name = geo.properties.name;
-                    const isHi = Boolean(highlights[name]);
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        onMouseEnter={() => isHi && setActiveKey(name)}
-                        style={{
-                          default: {
-                            fill: isHi ? highlights[name].color : "#3a3a3a",
-                            outline: "none",
-                            stroke: "#111827",
-                            strokeWidth: 0.5,
-                            opacity: isHi ? 1 : 0.55,
-                          },
-                          hover: {
-                            fill: isHi ? highlights[name].color : "#4b4b4b",
-                            outline: "none",
-                          },
-                          pressed: { outline: "none" },
-                        }}
-                      />
-                    );
-                  })
-                }
-              </Geographies>
-
-              {/* active country label bubble */}
-              {activeKey && centers[activeKey] && (
-                <Annotation subject={centers[activeKey]} dx={0} dy={-25}>
-                  <g transform="translate(-55,-28)">
-                    <rect
-                      width="110"
-                      height="28"
-                      rx="10"
-                      ry="10"
-                      fill="#111827"
-                      opacity="0.95"
-                    />
-                    <text
-                      x="55"
-                      y="18"
-                      fontSize="12"
-                      textAnchor="middle"
-                      fill="#fff"
-                    >
-                      {activeKey.replace(" of America", "")}
-                    </text>
-                  </g>
-                </Annotation>
-              )}
-            </ComposableMap>
-          </div>
+      {/* 2) Top location */}
+      <Card style={{ width: 256, height: 185, left: 116, background: "#1f1f1f" }}>
+        <div className="p-3 h-full">
+          <div className="mb-2 text-white/80 text-sm">Top location</div>
+          <button
+            type="button"
+            onClick={() => setMapBlue((v) => !v)}
+            className="relative h-[120px] w-full rounded-lg overflow-hidden"
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1024px-World_map_-_low_resolution.svg.png"
+              alt="map"
+              className={`absolute inset-0 h-full w-full object-cover opacity-90 transition ${
+                mapBlue ? "hue-rotate-180 saturate-150 brightness-110" : ""
+              }`}
+            />
+            <Dot className="bg-emerald-400" style={{ position: "absolute", left: "34%", top: "42%" }} />
+            <Dot className="bg-yellow-400" style={{ position: "absolute", left: "58%", top: "54%" }} />
+          </button>
         </div>
-      </div>
-    </div>
-  );
-};
+      </Card>
 
-/* ===================== Page ===================== */
-export default function DashboardHome() {
-  return (
-    <div className="bg-[#222222] text-gray-100 min-h-screen px-3 md:px-4">
-      <div className="mx-auto w-full max-w-[1100px] py-4">
-        {/* Analytics Overview */}
-        <div className="bg-[#222222] p-4 sm:p-6 rounded-lg mb-6">
-          <h2 className="text-sm text-white/80 mb-4">Analytics Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#171717] p-4 sm:p-5 rounded-2xl">
-              <div className="text-gray-400 text-[11px] tracking-widest">
-                SALES
-              </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mt-1">
-                $21.2K
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                ($19.2K last year)
-              </div>
-              <div className="text-green-400 text-sm mt-3">↑ 105.23 %</div>
-            </div>
-            <div className="bg-[#171717] p-4 sm:p-5 rounded-2xl">
-              <div className="text-gray-400 text-[11px] tracking-widest">
-                PURCHASE
-              </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mt-1">
-                $16.0K
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                ($20.1K last year)
-              </div>
-              <div className="text-red-400 text-sm mt-3">↓ 20.15 %</div>
-            </div>
-            <div className="bg-[#171717] p-4 sm:p-5 rounded-2xl">
-              <div className="text-gray-400 text-[11px] tracking-widest">
-                RETURN
-              </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mt-1">
-                $259.0
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                ($300.5 last year)
-              </div>
-              <div className="text-green-400 text-sm mt-3">↑ 15.20 %</div>
-            </div>
-            <div className="bg-[#171717] p-4 sm:p-5 rounded-2xl">
-              <div className="text-gray-400 text-[11px] tracking-widest">
-                MARKETING
-              </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mt-1">
-                $13.1K
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                ($10.5K last year)
-              </div>
-              <div className="text-green-400 text-sm mt-3">↑ 32.84 %</div>
-            </div>
+      {/* 3) virified account donut */}
+      <Card style={{ width: 266, height: 186, left: 378, background: "#1b1b1b" }}>
+        <div className="p-3 h-full">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-sm text-white/80">virified account</span>
+            <span className="rounded bg-blue-600 px-2 py-1 text-xs">1174 • 86</span>
           </div>
-        </div>
-
-        {/* Sales Figures */}
-        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">Sales Figures</h3>
-            <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-[#2a2a2a] text-xs text-white/80 hover:bg-[#333]">
-                <span className="h-2.5 w-2.5 rounded-full bg-purple-500"></span>
-                free account
-              </button>
-              <button className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-[#2a2a2a] text-xs text-white/80 hover:bg-[#333]">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                Paid account
-              </button>
-            </div>
-          </div>
-          <div className="h-60 sm:h-72 md:h-80">
+          <div className="relative h-[120px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "#9CA3AF" }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: "#9CA3AF" }}
-                  domain={[0, 1000]}
-                  ticks={[0, 200, 400, 600, 800, 1000]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="netAmount"
-                  stroke="#7c6cff"
-                  strokeWidth={3}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="paidAmount"
-                  stroke="#10B981"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
+              <PieChart>
+                <Pie data={verifiedAccountData} cx="50%" cy="50%" innerRadius={38} outerRadius={58} dataKey="value" stroke="none">
+                  {verifiedAccountData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  <Label
+                    position="center"
+                    content={() => (
+                      <g>
+                        <text x={0} y={0} textAnchor="middle" dominantBaseline="central" transform="translate(128,58)">
+                          <tspan fill="#fff" fontSize="16" fontWeight="700">1500</tspan>
+                          <tspan x="128" dy="14" fill="#9ca3af" fontSize="9">count</tspan>
+                        </text>
+                      </g>
+                    )}
+                  />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute right-2 top-2 text-[10px] text-white/70">10%<br/>Not verified</div>
+            <div className="absolute left-2 bottom-1 text-[10px] text-white/70">90<br/>verified</div>
+          </div>
+          <div className="mt-1 space-y-0.5 text-[10px]">
+            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{background:'#7C3AED'}} /> <span>verified</span></div>
+            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{background:'#10b981'}} /> <span>Banned</span></div>
+            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{background:'#F59E0B'}} /> <span>Not verified</span></div>
+          </div>
+        </div>
+      </Card>
+
+      {/* 4) Spant Chart (wide) */}
+      <Card style={{ width: 292, height: 284, left: 650, background: "#1b1b1b" }}>
+        <div className="p-3 h-full">
+          <div className="mb-2 text-white/80 font-medium">Spant Chart</div>
+          <div className="relative h-[170px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={spentChartData} cx="50%" cy="50%" innerRadius={44} outerRadius={66} dataKey="value" labelLine={false} label={renderPercentLabel}>
+                  {spentChartData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                </Pie>
+              </PieChart>
             </ResponsiveContainer>
           </div>
+          <div className="mt-2 text-[11px] text-white/70 whitespace-pre-wrap">● restaurants ● hotels ● beauty ● entertainment ● sport ● coupon</div>
         </div>
+      </Card>
 
-        {/* Usage + Downloads */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-[#1e1e1e] rounded-2xl p-5 md:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Ring percent={75} color="#22c55e" />
-                <div>
-                  <div className="text-white text-xl font-semibold">75%</div>
-                  <div className="text-gray-400 text-sm">
-                    Usage rate of offers
-                  </div>
-                </div>
+      {/* 5) Statistic (tall) */}
+      <Card style={{ width: 163, height: 284, left: 948, background: "#1b1b1b" }}>
+        <div className="p-3 h-full">
+          <div className="mb-1 text-sm text-white/80">Statistic</div>
+          {[
+            { label: "entertain", v: 20, color: "#8B5CF6" },
+            { label: "spa", v: 100, color: "#06B6D4" },
+            { label: "beauty", v: 100, color: "#F59E0B" },
+            { label: "sport", v: 300, color: "#22C55E" },
+            { label: "beauty", v: 200, color: "#EF4444" },
+            { label: "hotels", v: 300, color: "#22C55E" },
+            { label: "coupon", v: 600, color: "#F97316" },
+          ].map((s, i) => (
+            <div key={i} className="mb-2">
+              <div className="mb-1 flex items-center justify-between text-[11px] text-white/70">
+                <span>{s.label}</span><span>{s.v}</span>
               </div>
-              <div className="text-green-400 text-sm font-medium">
-                ↑ 20.15 %
+              <div className="h-1 w-full rounded-full bg-white/10">
+                <div className="h-1 rounded-full" style={{ width: `${Math.min((s.v/600)*100,100)}%`, background: s.color }} />
               </div>
             </div>
-            <div className="my-4 h-px bg-white/5" />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Ring percent={50} color="#8b5cf6" />
-                <div>
-                  <div className="text-white text-xl font-semibold">50%</div>
-                  <div className="text-gray-400 text-sm">
-                    Usage rate of loyalty
-                  </div>
-                </div>
-              </div>
-              <div className="text-red-400 text-sm font-medium">↓ 20.15 %</div>
-            </div>
-          </div>
+          ))}
+        </div>
+      </Card>
 
-          <div className="bg-[#1e1e1e] rounded-2xl p-5 md:p-6">
-            <div className="h-36 sm:h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={[
-                    { v: 5 },
-                    { v: 8 },
-                    { v: 6 },
-                    { v: 10 },
-                    { v: 13 },
-                    { v: 12 },
-                    { v: 7 },
-                  ]}
-                >
-                  <XAxis hide />
-                  <YAxis hide domain={[0, 15]} />
-                  <Line
-                    type="monotone"
-                    dataKey="v"
-                    stroke="#7c6cff"
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-2 flex items-center justify-between">
-              <div>
-                <div className="text-white text-lg font-semibold">$21.2K</div>
-                <div className="text-gray-400 text-sm">new downloads</div>
-              </div>
-              <div className="text-green-400 text-sm font-medium">
-                ↑ 105.23 %
-              </div>
-            </div>
+      {/* Row 2: d, f, b, c */}
+      <Card style={{ width: 168, height: 94, top: 193, left: -19, background: "#8BC255" }}>
+        <div className="h-full w-full flex items-center gap-2">
+          <img src={imgD} className="h-[88px] -ml-1 object-contain" alt="d" />
+          <div className="ml-auto pr-3 text-right">
+            <div className="text-white text-lg font-semibold leading-none">1500</div>
+            <div className="text-black/90 text-[11px]">All merchants</div>
           </div>
         </div>
-
-        {/* Top row: New Customers + Transaction History */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
-          <div className="bg-[#1e1e1e] rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-white font-semibold">New Customers</div>
-              <button className="text-white/60 hover:text-white">
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="divide-y divide-white/5">
-              {customers.map((c, i) => (
-                <PersonRow key={i} item={c} />
-              ))}
-            </div>
-            <button className="mt-4 w-full h-9 rounded-full bg-white/5 text-gray-300 text-sm">
-              View more Customers
-            </button>
-          </div>
-
-          <div className="bg-[#1e1e1e] rounded-2xl p-5">
-            <div className="text-white font-semibold mb-3">
-              Transaction History
-            </div>
-            <div className="rounded-lg bg-[#2a2a2a] px-4 py-2 text-[11px] uppercase tracking-wider text-white/70 grid grid-cols-[1fr_auto_auto]">
-              <div>Payment Number</div>
-              <div className="text-right">Amount</div>
-              <div className="text-right">Status</div>
-            </div>
-            <div className="mt-2 divide-y divide-white/5">
-              {transactions.map((tx) => (
-                <PaymentRow key={tx.id} tx={tx} />
-              ))}
-            </div>
-            <div className="mt-2 h-9 rounded-full bg-white/5" />
-            <button className="mt-3 w-full h-9 rounded-full bg-white/5 text-gray-300 text-sm">
-              View All transactions
-            </button>
-          </div>
+      </Card>
+      <Card style={{ width: 162, height: 94, top: 193, left: 154, background: "#292929" }}>
+        <div className="h-full w-full flex items-center justify-between px-3">
+          <img src={imgF} className="h-10 object-contain" alt="f" />
+          <div className="text-white text-lg font-semibold">10</div>
         </div>
-
-        {/* Bottom row: New merchants + Transaction History */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
-          <div className="bg-[#1e1e1e] rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-white font-semibold">New merchants</div>
-              <button className="text-white/60 hover:text-white">
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="divide-y divide-white/5">
-              {newMerchants.map((m, i) => (
-                <PersonRow key={i} item={m} />
-              ))}
-            </div>
-            <button className="mt-4 w-full h-9 rounded-full bg-white/5 text-gray-300 text-sm">
-              View more Customers
-            </button>
-          </div>
-
-          <div className="bg-[#1e1e1e] rounded-2xl p-5">
-            <div className="text-white font-semibold mb-3">
-              Transaction History
-            </div>
-            <div className="rounded-lg bg-[#2a2a2a] px-4 py-2 text-[11px] uppercase tracking-wider text-white/70 grid grid-cols-[1fr_auto_auto]">
-              <div>Payment Number</div>
-              <div className="text-right">Amount</div>
-              <div className="text-right">Status</div>
-            </div>
-            <div className="mt-2 divide-y divide-white/5">
-              {transactions.map((tx) => (
-                <PaymentRow key={tx.id} tx={tx} />
-              ))}
-            </div>
-            <div className="mt-2 h-9 rounded-full bg-white/5" />
-            <button className="mt-3 w-full h-9 rounded-full bg-white/5 text-gray-300 text-sm">
-              View All transactions
-            </button>
-          </div>
+        <div className="absolute left-3 bottom-2 text-[11px] text-white/75">Banned merchants</div>
+      </Card>
+      <Card style={{ width: 162, height: 94, top: 193, left: 319, background: "#292929" }}>
+        <div className="h-full w-full flex items-center justify-between px-3">
+          <img src={imgB} className="h-10 object-contain" alt="b" />
+          <div className="text-white text-lg font-semibold">1400</div>
         </div>
+        <div className="absolute left-3 bottom-2 text-[11px] text-white/75">verified merchants</div>
+      </Card>
+      <Card style={{ width: 163, height: 94, top: 193, left: 484, background: "#292929" }}>
+        <div className="h-full w-full flex items-center justify-between px-3">
+          <img src={imgC} className="h-10 object-contain" alt="c" />
+          <div className="text-white text-lg font-semibold">—</div>
+        </div>
+        <div className="absolute left-3 bottom-2 text-[11px] text-white/75">Active merchants</div>
+      </Card>
+    </div>
+  );
+}
 
-        {/* Sales Locations (exact world map) */}
-        <SalesLocations />
+/* ================== Filters Row ================== */
+function FiltersRow() {
+  return (
+    <div className="mb-4 flex w-full items-center justify-between gap-3">
+      <div className="relative w-[260px]">
+        <input
+          type="text"
+          placeholder="Search"
+          className="w-full rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2 pl-10 text-sm placeholder:text-white/40 focus:outline-none"
+        />
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-white/50" />
+      </div>
+      <div className="flex items-center gap-3 text-sm">
+        <select className="w-[160px] rounded-md border border-white/10 bg-[#1A1A1A] px-3 py-2">
+          <option>ACCOUNT</option>
+          <option>Active Merchant</option>
+          <option>Expired Merchant</option>
+          <option>Disconnected Merchant</option>
+        </select>
+        <select className="w-[120px] rounded-md border border-white/10 bg-[#1A1A1A] px-3 py-2">
+          <option>All</option>
+          <option>Not verified</option>
+          <option>verified</option>
+          <option>Banned</option>
+        </select>
+        <button className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2">csv</button>
+        <button className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2">pdf</button>
+        <button className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-2">excel</button>
+        <button className="rounded-full bg-yellow-500 px-5 py-2 font-semibold text-white hover:bg-yellow-400">+ New Merchant</button>
+      </div>
+    </div>
+  );
+}
+
+/* ================== Merchants Table ================== */
+function MerchantsTable() {
+  const ArrowBtn = () => (
+    <button
+      type="button"
+      className="grid h-8 w-[58px] place-items-center rounded-full bg-white text-black shadow-sm"
+      aria-label="Open row"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+
+  // stacked header: arrow icon on top, label below
+  const SortHeader = ({ label }) => (
+    <div className="flex flex-col items-start leading-tight">
+      <ArrowUpDown className="h-3.5 w-3.5 text-white/60 -mb-0.5" />
+      <div className="text-[10px] uppercase text-white/45">{label}</div>
+    </div>
+  );
+
+  // total exactly 1200px (no overflow if container has px-0)
+  const COLS = "grid grid-cols-[220px_90px_90px_70px_70px_70px_90px_90px_100px_130px_100px_80px]";
+
+  const BrandCell = ({ row }) => (
+    <div className="flex items-center gap-2 px-2 min-w-0 h-full bg-[#1a1a1a]">
+      <img
+        src={row.logo || comLogo}
+        alt="logo"
+        className="h-8 w-8 flex-shrink-0 rounded-lg object-cover"
+        onError={(e) => { try { e.currentTarget.src = comLogo; } catch (_) {} }}
+      />
+      <div className="min-w-0">
+        <div className="truncate text-[11px] font-medium leading-5" title={row.name}>{row.name}</div>
+        <div className="text-[9.5px] text-white/55 truncate" title={row.email}>{row.email}</div>
+        <div className="text-[9.5px] text-white/55 truncate" title={row.number}>{row.number}</div>
+      </div>
+    </div>
+  );
+
+  const normalizeStatus = (s) => {
+    const st = String(s || "").trim().toLowerCase();
+    if (st.includes("not")) return "Not verified";
+    if (st === "verified") return "verified";
+    if (st === "banned") return "Banned";
+    return s || "—";
+  };
+
+  return (
+    <div className="rounded-xl border border-white/5 w-full">
+      {/* Header */}
+      <div className={`${COLS} bg-[#141414] px-2.5 py-4`}>
+        <div className="text-[13px] uppercase tracking-wide text-white/105">Company NAME</div>
+        <SortHeader label="Category" />
+        <SortHeader label="Type" />
+        <SortHeader label="Offers" />
+        <SortHeader label="Booking" />
+        <SortHeader label="Loyalty" />
+        <SortHeader label="Views" />
+        <SortHeader label="Likes" />
+        <SortHeader label="Profits" />
+        <SortHeader label="Joined On" />
+         <SortHeader label="Status" />
+        <SortHeader label="Action" />
+        {/* <div className="text-[10px] uppercase tracking-wide text-white/105 grid place-items-start">Status</div> */}
+        {/* <div className="text-[10px] uppercase tracking-wide text-white/105 grid place-items-end pr-1">Action</div> */}
+      </div>
+
+      {/* Rows */}
+      {tableData.map((row, i) => (
+        <div key={i} className={`${COLS} items-center border-t border-white/10 bg-[#0F0F0F]`}>
+          <BrandCell row={row} />
+          <div className="h-12 grid place-items-center text-[11px] text-white/60">{row.category}</div>
+          <div className="h-12 grid place-items-center text-[11px] text-white/60 bg-[#1a1a1a]" title={row.type}>{row.type}</div>
+          <div className="h-12 grid place-items-center text-[11px] text-white/60">{row.offers}</div>
+          <div className="h-12 grid place-items-center text-[11px] text-white/60 bg-[#1a1a1a]">{row.bookings}</div>
+          <div className="h-12 grid place-items-center text-[11px] text-white/60">{row.loyalty}</div>
+          <div className="h-12 grid place-items-center text-[11px] text-white/60">{row.views}</div>
+          <div className="h-12 grid place-items-center text-[11px] text-white/60">{row.likes}</div>
+          <div className="h-12 bg-[#1a1a1a] px-2 py-1.5 flex flex-col items-start justify-center leading-tight">
+            <span className="text-[11px]">{row.profits}</span>
+            <span className="text-[9.5px] text-emerald-400">↗ 3.7%</span>
+          </div>
+          <div className="h-12 grid place-items-center text-[9.5px] text-white/55 text-center px-2 break-words" title={row.joinedOn}>{row.joinedOn}</div>
+          <div className="h-12 grid place-items-center text-[11px] bg-[#1a1a1a]"><span className="text-white/70">{normalizeStatus(row.status)}</span></div>
+          <div className="h-12 grid place-items-end pr-2"><ArrowBtn /></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================== Page ================== */
+export default function Dashboard() {
+  return (
+    <div className="min-h-screen bg-[#0F0F0F] text-white overflow-x-hidden">
+      {/* IMPORTANT: px-0 to avoid pushing 1200px grid wider than container */}
+      <div className="mx-auto w-full max-w-[1200px] px-0 py-4 sm:py-6 relative">
+        <CardSection />
+        <FiltersRow />
+        <MerchantsTable />
       </div>
     </div>
   );
