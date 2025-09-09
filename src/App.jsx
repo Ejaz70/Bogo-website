@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 
+// ===== Administration Screens =====
 import RoleManagement from "./components/Administration/RoleManagement";
 import Customers from "./components/Administration/Customers";
 import Merchants from "./components/Administration/Merchants";
@@ -23,10 +24,13 @@ import Affiliate from "./components/Administration/Affiliate";
 import XPpointManagement from "./components/Administration/XPpointManagement";
 import AppManagement from "./components/Administration/AppManagement";
 import OffersManagement from "./components/Administration/OffersManagement";
+import Newmerchants from "./components/Administration/Newmerchants"; // ✅ NEW
 
+// ===== Dashboard Shell & Home =====
 import DashboardHome from "./components/Administration/DashboardHome";
 import Dashboard from "./components/Administration/Dashboard";
 
+// ===== Auth Screens =====
 import SignIn from "./components/SignIn";
 import ForgotPassword from "./components/Forget.jsx"; // ✅ Correct import
 import Register from "./components/Register";
@@ -47,16 +51,16 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/" />;
 }
 
-const App = () => {
+export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Auth Routes */}
+        {/* ===== Auth Routes ===== */}
         <Route path="/" element={<SignIn />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} /> {/* ✅ Updated route */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected Dashboard Routes */}
+        {/* ===== Protected Dashboard Routes ===== */}
         <Route
           path="/dashboard"
           element={
@@ -70,6 +74,7 @@ const App = () => {
           <Route path="customers" element={<Customers />} />
           <Route path="merchants" element={<Merchants />} />
           <Route path="product" element={<Product />} />
+          <Route path="newmerchants" element={<Newmerchants />} /> {/* ✅ NEW route */}
           <Route path="promotion" element={<Promotion />} />
           <Route path="payment" element={<Payment />} />
           <Route path="orders" element={<Orders />} />
@@ -90,6 +95,4 @@ const App = () => {
       </Routes>
     </Router>
   );
-};
-
-export default App;
+}

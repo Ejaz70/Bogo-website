@@ -4,11 +4,11 @@ import { Search, ArrowUpDown } from "lucide-react";
 import comLogo from "../../assets/com.png";
 
 /* ---- image imports ---- */
-import car1 from "../../assets/a.png";   // top-left card image
-import imgD from "../../assets/d.png";   // row2 card1
-import imgF from "../../assets/f.png";   // row2 card2
-import imgB from "../../assets/b.png";   // row2 card3
-import imgC from "../../assets/c.png";   // row2 card4
+import car1 from "../../assets/a.png"; // top-left card image
+import imgD from "../../assets/d.png"; // row2 card1
+import imgF from "../../assets/f.png"; // row2 card2
+import imgB from "../../assets/b.png"; // row2 card3
+import imgC from "../../assets/c.png"; // row2 card4
 // import worldMap from "../../assets/top/world-map.png";
 
 /* ================== Chart Data ================== */
@@ -54,7 +54,8 @@ function makeCompanies() {
       email: `company${n}@demo.com`,
       number: `+92 30${(i % 9) + 1} 12${(i % 90) + 10} ${100 + i}`,
       logo: "/assets/logos/company.png",
-      category: i % 5 === 0 ? "hotels" : i % 2 === 0 ? "restaurants" : "entertainment",
+      category:
+        i % 5 === 0 ? "hotels" : i % 2 === 0 ? "restaurants" : "entertainment",
       type: i % 2 === 0 ? "fast food" : i % 3 === 0 ? "games" : "service",
       offers: `${(i + 1) * 7}`,
       bookings: `${(i + 2) * 4}`,
@@ -63,16 +64,29 @@ function makeCompanies() {
       likes: `${(i % 9) * 100 + 100}`,
       profits: `${1200 + i * 37} $`,
       joinedOn: `1/${(i % 12) + 1}/2024 10:${(i % 50) + 10}:05 AM`,
-      status: i % 3 === 0 ? "verified" : i % 3 === 1 ? "Banned" : "Not verified",
+      status:
+        i % 3 === 0 ? "verified" : i % 3 === 1 ? "Banned" : "Not verified",
     };
   });
   return seed.concat(extra);
 }
 const tableData = makeCompanies();
 
+/* ================== Utils ================== */
+const normalizeStatus = (s) => {
+  const st = String(s || "").trim().toLowerCase();
+  if (st.includes("not")) return "Not verified";
+  if (st === "verified") return "verified";
+  if (st === "banned") return "Banned";
+  return s || "—";
+};
+
 /* ================== Primitives ================== */
 const Card = ({ children, style, className = "" }) => (
-  <div className={`absolute border border-white/5 shadow-sm overflow-hidden rounded-[5px] ${className}`} style={style}>
+  <div
+    className={`absolute border border-white/5 shadow-sm overflow-hidden rounded-[5px] ${className}`}
+    style={style}
+  >
     {children}
   </div>
 );
@@ -91,15 +105,14 @@ const renderPercentLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
   );
 };
 
-/* ================== Card Section ================== */
+/* ================== Card Section (slightly wider) ================== */
 function CardSection() {
   const [mapBlue, setMapBlue] = useState(false);
 
   return (
-    // wrap with overflow-x-hidden so absolute children (left:-18) never create scroll
     <div className="relative w-full h-[300px] mb-6 overflow-x-hidden">
       {/* 1) Best saler */}
-      <Card style={{ width: 128, height: 185, left: -18, background: "#FFC02D" }}>
+      <Card style={{ width: 120, height: 185, left: -16, background: "#FFC02D" }}>
         <div className="h-full w-full grid grid-rows-[1fr_auto]">
           <div className="grid place-items-center">
             <img src={car1} className="h-[120px] object-contain" alt="best" />
@@ -112,7 +125,7 @@ function CardSection() {
       </Card>
 
       {/* 2) Top location */}
-      <Card style={{ width: 256, height: 185, left: 116, background: "#1f1f1f" }}>
+      <Card style={{ width: 250, height: 185, left: 110, background: "#1f1f1f" }}>
         <div className="p-3 h-full">
           <div className="mb-2 text-white/80 text-sm">Top location</div>
           <button
@@ -123,9 +136,7 @@ function CardSection() {
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1024px-World_map_-_low_resolution.svg.png"
               alt="map"
-              className={`absolute inset-0 h-full w-full object-cover opacity-90 transition ${
-                mapBlue ? "hue-rotate-180 saturate-150 brightness-110" : ""
-              }`}
+              className={`absolute inset-0 h-full w-full object-cover opacity-90 transition ${mapBlue ? "hue-rotate-180 saturate-150 brightness-110" : ""}`}
             />
             <Dot className="bg-emerald-400" style={{ position: "absolute", left: "34%", top: "42%" }} />
             <Dot className="bg-yellow-400" style={{ position: "absolute", left: "58%", top: "54%" }} />
@@ -133,25 +144,27 @@ function CardSection() {
         </div>
       </Card>
 
-      {/* 3) virified account donut */}
-      <Card style={{ width: 266, height: 186, left: 378, background: "#1b1b1b" }}>
+      {/* 3) verified account donut */}
+      <Card style={{ width: 258, height: 186, left: 370, background: "#1b1b1b" }}>
         <div className="p-3 h-full">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm text-white/80">virified account</span>
+            <span className="text-sm text-white/80">verified account</span>
             <span className="rounded bg-blue-600 px-2 py-1 text-xs">1174 • 86</span>
           </div>
           <div className="relative h-[120px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={verifiedAccountData} cx="50%" cy="50%" innerRadius={38} outerRadius={58} dataKey="value" stroke="none">
-                  {verifiedAccountData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  {verifiedAccountData.map((e, i) => (
+                    <Cell key={i} fill={e.color} />
+                  ))}
                   <Label
                     position="center"
                     content={() => (
                       <g>
-                        <text x={0} y={0} textAnchor="middle" dominantBaseline="central" transform="translate(128,58)">
+                        <text x={0} y={0} textAnchor="middle" dominantBaseline="central" transform="translate(130,58)">
                           <tspan fill="#fff" fontSize="16" fontWeight="700">1500</tspan>
-                          <tspan x="128" dy="14" fill="#9ca3af" fontSize="9">count</tspan>
+                          <tspan x="130" dy="14" fill="#9ca3af" fontSize="9">count</tspan>
                         </text>
                       </g>
                     )}
@@ -159,26 +172,28 @@ function CardSection() {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="absolute right-2 top-2 text-[10px] text-white/70">10%<br/>Not verified</div>
-            <div className="absolute left-2 bottom-1 text-[10px] text-white/70">90<br/>verified</div>
+            <div className="absolute right-2 top-2 text-[10px] text-white/70">10%<br />Not verified</div>
+            <div className="absolute left-2 bottom-1 text-[10px] text-white/70">90<br />verified</div>
           </div>
           <div className="mt-1 space-y-0.5 text-[10px]">
-            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{background:'#7C3AED'}} /> <span>verified</span></div>
-            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{background:'#10b981'}} /> <span>Banned</span></div>
-            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{background:'#F59E0B'}} /> <span>Not verified</span></div>
+            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{ background: "#7C3AED" }} /> <span>verified</span></div>
+            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{ background: "#10b981" }} /> <span>Banned</span></div>
+            <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full" style={{ background: "#F59E0B" }} /> <span>Not verified</span></div>
           </div>
         </div>
       </Card>
 
-      {/* 4) Spant Chart (wide) */}
-      <Card style={{ width: 292, height: 284, left: 650, background: "#1b1b1b" }}>
+      {/* 4) Spent Chart (wide) */}
+      <Card style={{ width: 300, height: 284, left: 640, background: "#1b1b1b" }}>
         <div className="p-3 h-full">
-          <div className="mb-2 text-white/80 font-medium">Spant Chart</div>
+          <div className="mb-2 text-white/80 font-medium">Spent Chart</div>
           <div className="relative h-[170px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={spentChartData} cx="50%" cy="50%" innerRadius={44} outerRadius={66} dataKey="value" labelLine={false} label={renderPercentLabel}>
-                  {spentChartData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  {spentChartData.map((e, i) => (
+                    <Cell key={i} fill={e.color} />
+                  ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
@@ -188,7 +203,7 @@ function CardSection() {
       </Card>
 
       {/* 5) Statistic (tall) */}
-      <Card style={{ width: 163, height: 284, left: 948, background: "#1b1b1b" }}>
+      <Card style={{ width: 165, height: 284, left: 952, background: "#1b1b1b" }}>
         <div className="p-3 h-full">
           <div className="mb-1 text-sm text-white/80">Statistic</div>
           {[
@@ -202,10 +217,11 @@ function CardSection() {
           ].map((s, i) => (
             <div key={i} className="mb-2">
               <div className="mb-1 flex items-center justify-between text-[11px] text-white/70">
-                <span>{s.label}</span><span>{s.v}</span>
+                <span>{s.label}</span>
+                <span>{s.v}</span>
               </div>
               <div className="h-1 w-full rounded-full bg-white/10">
-                <div className="h-1 rounded-full" style={{ width: `${Math.min((s.v/600)*100,100)}%`, background: s.color }} />
+                <div className="h-1 rounded-full" style={{ width: `${Math.min((s.v / 600) * 100, 100)}%`, background: s.color }} />
               </div>
             </div>
           ))}
@@ -213,7 +229,7 @@ function CardSection() {
       </Card>
 
       {/* Row 2: d, f, b, c */}
-      <Card style={{ width: 168, height: 94, top: 193, left: -19, background: "#8BC255" }}>
+      <Card style={{ width: 160, height: 94, top: 193, left: -16, background: "#8BC255" }}>
         <div className="h-full w-full flex items-center gap-2">
           <img src={imgD} className="h-[88px] -ml-1 object-contain" alt="d" />
           <div className="ml-auto pr-3 text-right">
@@ -222,21 +238,21 @@ function CardSection() {
           </div>
         </div>
       </Card>
-      <Card style={{ width: 162, height: 94, top: 193, left: 154, background: "#292929" }}>
+      <Card style={{ width: 154, height: 94, top: 193, left: 150, background: "#292929" }}>
         <div className="h-full w-full flex items-center justify-between px-3">
           <img src={imgF} className="h-10 object-contain" alt="f" />
           <div className="text-white text-lg font-semibold">10</div>
         </div>
         <div className="absolute left-3 bottom-2 text-[11px] text-white/75">Banned merchants</div>
       </Card>
-      <Card style={{ width: 162, height: 94, top: 193, left: 319, background: "#292929" }}>
+      <Card style={{ width: 154, height: 94, top: 193, left: 305, background: "#292929" }}>
         <div className="h-full w-full flex items-center justify-between px-3">
           <img src={imgB} className="h-10 object-contain" alt="b" />
           <div className="text-white text-lg font-semibold">1400</div>
         </div>
         <div className="absolute left-3 bottom-2 text-[11px] text-white/75">verified merchants</div>
       </Card>
-      <Card style={{ width: 163, height: 94, top: 193, left: 484, background: "#292929" }}>
+      <Card style={{ width: 160, height: 94, top: 193, left: 462, background: "#292929" }}>
         <div className="h-full w-full flex items-center justify-between px-3">
           <img src={imgC} className="h-10 object-contain" alt="c" />
           <div className="text-white text-lg font-semibold">—</div>
@@ -248,10 +264,10 @@ function CardSection() {
 }
 
 /* ================== Filters Row ================== */
-function FiltersRow() {
+function FiltersRow({ status, setStatus }) {
   return (
     <div className="mb-4 flex w-full items-center justify-between gap-3">
-      <div className="relative w-[260px]">
+      <div className="relative w-[260px]">{/* slightly wider search again */}
         <input
           type="text"
           placeholder="Search"
@@ -266,7 +282,12 @@ function FiltersRow() {
           <option>Expired Merchant</option>
           <option>Disconnected Merchant</option>
         </select>
-        <select className="w-[120px] rounded-md border border-white/10 bg-[#1A1A1A] px-3 py-2">
+        {/* Status filter - controls table */}
+        <select
+          className="w-[140px] rounded-md border border-white/10 bg-[#1A1A1A] px-3 py-2"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
           <option>All</option>
           <option>Not verified</option>
           <option>verified</option>
@@ -282,13 +303,9 @@ function FiltersRow() {
 }
 
 /* ================== Merchants Table ================== */
-function MerchantsTable() {
+function MerchantsTable({ rows }) {
   const ArrowBtn = () => (
-    <button
-      type="button"
-      className="grid h-8 w-[58px] place-items-center rounded-full bg-white text-black shadow-sm"
-      aria-label="Open row"
-    >
+    <button type="button" className="grid h-8 w-[58px] place-items-center rounded-full bg-white text-black shadow-sm" aria-label="Open row">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -303,8 +320,8 @@ function MerchantsTable() {
     </div>
   );
 
-  // total exactly 1200px (no overflow if container has px-0)
-  const COLS = "grid grid-cols-[220px_90px_90px_70px_70px_70px_90px_90px_100px_130px_100px_80px]";
+  // total exactly 1100px (narrower than before)
+  const COLS = "grid grid-cols-[200px_82px_82px_64px_64px_64px_82px_82px_92px_118px_90px_80px]";
 
   const BrandCell = ({ row }) => (
     <div className="flex items-center gap-2 px-2 min-w-0 h-full bg-[#1a1a1a]">
@@ -312,7 +329,11 @@ function MerchantsTable() {
         src={row.logo || comLogo}
         alt="logo"
         className="h-8 w-8 flex-shrink-0 rounded-lg object-cover"
-        onError={(e) => { try { e.currentTarget.src = comLogo; } catch (_) {} }}
+        onError={(e) => {
+          try {
+            e.currentTarget.src = comLogo;
+          } catch (_) {}
+        }}
       />
       <div className="min-w-0">
         <div className="truncate text-[11px] font-medium leading-5" title={row.name}>{row.name}</div>
@@ -321,14 +342,6 @@ function MerchantsTable() {
       </div>
     </div>
   );
-
-  const normalizeStatus = (s) => {
-    const st = String(s || "").trim().toLowerCase();
-    if (st.includes("not")) return "Not verified";
-    if (st === "verified") return "verified";
-    if (st === "banned") return "Banned";
-    return s || "—";
-  };
 
   return (
     <div className="rounded-xl border border-white/5 w-full">
@@ -344,14 +357,12 @@ function MerchantsTable() {
         <SortHeader label="Likes" />
         <SortHeader label="Profits" />
         <SortHeader label="Joined On" />
-         <SortHeader label="Status" />
+        <SortHeader label="Status" />
         <SortHeader label="Action" />
-        {/* <div className="text-[10px] uppercase tracking-wide text-white/105 grid place-items-start">Status</div> */}
-        {/* <div className="text-[10px] uppercase tracking-wide text-white/105 grid place-items-end pr-1">Action</div> */}
       </div>
 
       {/* Rows */}
-      {tableData.map((row, i) => (
+      {rows.map((row, i) => (
         <div key={i} className={`${COLS} items-center border-t border-white/10 bg-[#0F0F0F]`}>
           <BrandCell row={row} />
           <div className="h-12 grid place-items-center text-[11px] text-white/60">{row.category}</div>
@@ -376,13 +387,20 @@ function MerchantsTable() {
 
 /* ================== Page ================== */
 export default function Dashboard() {
+  const [status, setStatus] = useState("All");
+
+  const filteredRows = tableData.filter((row) => {
+    if (status === "All") return true;
+    return normalizeStatus(row.status) === status;
+  });
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-white overflow-x-hidden">
-      {/* IMPORTANT: px-0 to avoid pushing 1200px grid wider than container */}
-      <div className="mx-auto w-full max-w-[1200px] px-0 py-4 sm:py-6 relative">
+      {/* container widened a bit for card section */}
+      <div className="mx-auto w-full max-w-[1180px] px-0 py-4 sm:py-6 relative">
         <CardSection />
-        <FiltersRow />
-        <MerchantsTable />
+        <FiltersRow status={status} setStatus={setStatus} />
+        <MerchantsTable rows={filteredRows} />
       </div>
     </div>
   );
