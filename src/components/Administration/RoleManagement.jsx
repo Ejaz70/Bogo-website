@@ -3,20 +3,80 @@ import { Search, Trash2, Info, X } from "lucide-react";
 import { useNavigate } from "react-router-dom"; // ✅ for navigation
 
 const employees = [
-  { name: "Nur Khan", email: "nurkhan@gmail.com", role: "manager", page: "all page", report: 30, img: "https://i.pravatar.cc/100?img=1" },
-  { name: "Kate Lau", email: "katelau@gmail.com", role: "seo manager", page: "seo", report: 20, img: "https://i.pravatar.cc/100?img=2" },
-  { name: "Marías Fernanda Suárez", email: "mariafernanda@gmail.com", role: "message", page: "live chat", report: 0, img: "https://i.pravatar.cc/100?img=3" },
-  { name: "Aishwarya Kumar", email: "ashmit@gmail.com", role: "problem solving", page: "Contact", report: 0, img: "https://i.pravatar.cc/100?img=4" },
-  { name: "Guan Ram", email: "gram@gmail.com", role: "add notification", page: "Notification", report: 2, img: "https://i.pravatar.cc/100?img=5" },
-  { name: "Jabari Mostafa", email: "mostjabri@gmail.com", role: "problem solving", page: "Report", report: 1, img: "https://i.pravatar.cc/100?img=6" },
-  { name: "Taswir Sinaga", email: "tsw@gmail.com", role: "merchants manager", page: "merchants", report: 5, img: "https://i.pravatar.cc/100?img=7" },
-  { name: "Deep Mehta", email: "mehtdeep@gmail.com", role: "customers manager", page: "Customers", report: 20, img: "https://i.pravatar.cc/100?img=8" },
+  {
+    name: "Nur Khan",
+    email: "nurkhan@gmail.com",
+    role: "manager",
+    page: "all page",
+    report: 30,
+    img: "https://i.pravatar.cc/100?img=1",
+  },
+  {
+    name: "Kate Lau",
+    email: "katelau@gmail.com",
+    role: "seo manager",
+    page: "seo",
+    report: 20,
+    img: "https://i.pravatar.cc/100?img=2",
+  },
+  {
+    name: "Marías Fernanda Suárez",
+    email: "mariafernanda@gmail.com",
+    role: "message",
+    page: "live chat",
+    report: 0,
+    img: "https://i.pravatar.cc/100?img=3",
+  },
+  {
+    name: "Aishwarya Kumar",
+    email: "ashmit@gmail.com",
+    role: "problem solving",
+    page: "Contact",
+    report: 0,
+    img: "https://i.pravatar.cc/100?img=4",
+  },
+  {
+    name: "Guan Ram",
+    email: "gram@gmail.com",
+    role: "add notification",
+    page: "Notification",
+    report: 2,
+    img: "https://i.pravatar.cc/100?img=5",
+  },
+  {
+    name: "Jabari Mostafa",
+    email: "mostjabri@gmail.com",
+    role: "problem solving",
+    page: "Report",
+    report: 1,
+    img: "https://i.pravatar.cc/100?img=6",
+  },
+  {
+    name: "Taswir Sinaga",
+    email: "tsw@gmail.com",
+    role: "merchants manager",
+    page: "merchants",
+    report: 5,
+    img: "https://i.pravatar.cc/100?img=7",
+  },
+  {
+    name: "Deep Mehta",
+    email: "mehtdeep@gmail.com",
+    role: "customers manager",
+    page: "Customers",
+    report: 20,
+    img: "https://i.pravatar.cc/100?img=8",
+  },
 ];
 
 function norm(s = "") {
   // lower-case + remove accents/diacritics for friendly matching
   try {
-    return s.toString().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    return s
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "");
   } catch {
     return s.toString().toLowerCase();
   }
@@ -107,7 +167,10 @@ export default function RoleManagement() {
           </thead>
           <tbody>
             {filtered.map((emp, idx) => (
-              <tr key={`${emp.email}-${idx}`} className="border-b border-gray-800 hover:bg-[#1e1e1e]">
+              <tr
+                key={`${emp.email}-${idx}`}
+                className="border-b border-gray-800 hover:bg-[#1e1e1e]"
+              >
                 {/* Name + email */}
                 <td className="py-4 px-6 flex items-center gap-3">
                   <img
@@ -149,7 +212,9 @@ export default function RoleManagement() {
                       aria-label="Delete employee"
                       className="bg-orange-500 hover:bg-orange-600 p-2 rounded-2xl"
                       onClick={() =>
-                        setRows((prev) => prev.filter((r) => r.email !== emp.email))
+                        setRows((prev) =>
+                          prev.filter((r) => r.email !== emp.email)
+                        )
                       }
                     >
                       <Trash2 size={18} className="text-white" />
