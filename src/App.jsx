@@ -24,7 +24,12 @@ import Affiliate from "./components/Administration/Affiliate";
 import XPpointManagement from "./components/Administration/XPpointManagement";
 import AppManagement from "./components/Administration/AppManagement";
 import OffersManagement from "./components/Administration/OffersManagement";
-import Newmerchants from "./components/Administration/Newmerchants"; // ✅ NEW
+import Newmerchants from "./components/Administration/Newmerchants";
+// ✅ NEW: Keywords Ad detail screen
+import KeywordAdDetails from "./components/Administration/KeywordAdDetails";
+// ✅ NEW: Auto Ticket Delivery screen (Ticket Settings → detail)
+// import AutoTicketDelivery from "./components/Administration/AutoTicketDelivery";
+
 
 // ===== Dashboard Shell & Home =====
 import DashboardHome from "./components/Administration/DashboardHome";
@@ -32,7 +37,7 @@ import Dashboard from "./components/Administration/Dashboard";
 
 // ===== Auth Screens =====
 import SignIn from "./components/SignIn";
-import ForgotPassword from "./components/Forget.jsx"; // ✅ Correct import
+import ForgotPassword from "./components/Forget.jsx";
 import Register from "./components/Register";
 
 function ProtectedRoute({ children }) {
@@ -69,12 +74,15 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          {/* Default home inside dashboard */}
           <Route index element={<DashboardHome />} />
+
+          {/* Top-level admin modules */}
           <Route path="role-management" element={<RoleManagement />} />
           <Route path="customers" element={<Customers />} />
           <Route path="merchants" element={<Merchants />} />
           <Route path="product" element={<Product />} />
-          <Route path="newmerchants" element={<Newmerchants />} /> {/* ✅ NEW route */}
+          <Route path="newmerchants" element={<Newmerchants />} />
           <Route path="promotion" element={<Promotion />} />
           <Route path="payment" element={<Payment />} />
           <Route path="orders" element={<Orders />} />
@@ -85,8 +93,19 @@ export default function App() {
           <Route path="review" element={<Review />} />
           <Route path="notification" element={<Notification />} />
           <Route path="report" element={<Report />} />
+
+          {/* Ads Management + nested detail route */}
           <Route path="ads-management" element={<AdsManagement />} />
+          <Route path="ads-management/keywords/:id" element={<KeywordAdDetails />} />
+
+          {/* Ticket Management + NEW Auto Ticket Delivery detail */}
           <Route path="ticket-management" element={<TicketManagement />} />
+          {/* When user clicks the ticket settings card, navigate to this */}
+           {/* <Route path="ticket-management/auto-ticket-delivery" element={<AutoTicketDelivery />} /> */}
+           
+           {/* <Route path="/ticket-management/auto-ticket-delivery" element={<AutoTicketDelivery />} /> */}
+
+
           <Route path="affiliate" element={<Affiliate />} />
           <Route path="xp-management" element={<XPpointManagement />} />
           <Route path="app-management" element={<AppManagement />} />
