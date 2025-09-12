@@ -1,249 +1,535 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Mail,
+  Send,
+  Star,
+  Clock,
+  Trash2,
+  Plus,
+  ChevronDown,
+  Paperclip,
+  ArrowLeft,
+} from "lucide-react";
 
-const LiveChat = () => {
+/* ========= API CLIENT (stubs) ========= */
+// Set in .env: VITE_API_BASE_URL=https://api.example.com
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+async function api(path, { method = "GET", body, headers } = {}) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(headers || {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  // handle empty
+  const ct = res.headers.get("content-type") || "";
+  return ct.includes("application/json") ? res.json() : {};
+}
+
+/* === API wrappers (replace endpoints to match your backend) === */
+async function fetchMessages({ tab, folder }) {
+  if (!BASE_URL) return DEMO_MESSAGES.filter((m) => m.tab === tab).filter((m) =>
+    folder === "important" ? m.flags?.important : m.folder === folder
+  );
+  // example: /messages?tab=customers&folder=inbox
+  return api(`/messages?tab=${encodeURIComponent(tab)}&folder=${encodeURIComponent(folder)}`);
+}
+
+async function fetchMessageById(id) {
+  if (!BASE_URL) return DEMO_MESSAGES.find((m) => m.id === id) || null;
+  return api(`/messages/${encodeURIComponent(id)}`);
+}
+
+async function sendMessage(payload) {
+  if (!BASE_URL) {
+    // demo optimistic echo
+    return {
+      id: `local-${Date.now()}`,
+      folder: "sent",
+      tab: payload.tab || "customers",
+      from: "You",
+      email: payload.from || "you@bogo.app",
+      subject: payload.subject,
+      body: payload.body,
+      time: new Date().toLocaleString(),
+      attachments: [],
+      flags: { important: payload.priority === "major" },
+    };
+  }
+  return api("/messages", { method: "POST", body: payload });
+}
+
+/* ---------------- DEMO DATA fallback ---------------- */
+const DEMO_MESSAGES = [
+  {
+    id: "m1",
+    folder: "inbox",
+    tab: "customers",
+    from: "Grace Collin",
+    email: "grace@workmail.com",
+    subject: "Proposal for Implementing a Remote Work Policy",
+    body:
+      "Dear Team,\n\nI hope this email finds you well. Over the past year, our team has been working remotely..." +
+      "\n\nBest regards,\nGrace",
+    time: "Sep 06, 2025 • 09:42",
+    attachments: ["proposal.pdf", "timeline.xlsx"],
+    flags: { important: true },
+  },
+  {
+    id: "m2",
+    folder: "sent",
+    tab: "merchants",
+    from: "You",
+    email: "you@bogo.app",
+    subject: "Thanks for your partnership",
+    body: "Hello partner!\nSharing next quarter plan.",
+    time: "Sep 03, 2025 • 16:22",
+    attachments: [],
+    flags: { important: false },
+  },
+];
+
+/* ================= ROOT ================= */
+export default function LiveChat() {
+  const [screen, setScreen] = useState("inbox"); // inbox | compose
+
+  // inbox states
+  const [activeTab, setActiveTab] = useState("customers"); // customers | merchants | investors
+  const [activeFolder, setActiveFolder] = useState("inbox"); // inbox | sent | important | snooze | trash
+  const [list, setList] = useState([]);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState("");
+
+  const [selectedId, setSelectedId] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+
+  // compose
+  const [form, setForm] = useState({
+    customer: "",
+    sendTo: "",
+    mission: "",
+    workIn: "",
+    subject: "",
+    priority: "major",
+    body: "",
+  });
+  const [sendLoading, setSendLoading] = useState(false);
+  const [sendError, setSendError] = useState("");
+
+  /* ---- Load list when tab/folder changes ---- */
+  useEffect(() => {
+    let ignore = false;
+    const run = async () => {
+      setListLoading(true);
+      setListError("");
+      try {
+        const rows = await fetchMessages({ tab: activeTab, folder: activeFolder });
+        if (!ignore) {
+          setList(rows);
+          // select first if needed
+          setSelectedId((prev) => prev || rows[0]?.id || null);
+        }
+      } catch (e) {
+        if (!ignore) setListError(String(e?.message || e));
+      } finally {
+        if (!ignore) setListLoading(false);
+      }
+    };
+    run();
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, activeFolder]);
+
+  /* ---- Load detail when selectedId changes ---- */
+  useEffect(() => {
+    if (!selectedId) {
+      setSelected(null);
+      return;
+    }
+    let ignore = false;
+    const run = async () => {
+      setDetailLoading(true);
+      setDetailError("");
+      try {
+        const row = await fetchMessageById(selectedId);
+        if (!ignore) setSelected(row);
+      } catch (e) {
+        if (!ignore) setDetailError(String(e?.message || e));
+      } finally {
+        if (!ignore) setDetailLoading(false);
+      }
+    };
+    run();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedId]);
+
+  /* ---- Send handler ---- */
+  const handleSend = async () => {
+    setSendLoading(true);
+    setSendError("");
+    try {
+      const payload = {
+        tab: activeTab,
+        to: form.sendTo,
+        customer: form.customer,
+        mission: form.mission,
+        workIn: form.workIn,
+        subject: form.subject,
+        priority: form.priority,
+        body: form.body,
+      };
+      const created = await sendMessage(payload);
+
+      // Optimistic: if in Sent + current tab, prepend
+      if (activeFolder === "sent" && created?.tab === activeTab) {
+        setList((prev) => [created, ...prev]);
+      }
+      // reset
+      setForm({
+        customer: "",
+        sendTo: "",
+        mission: "",
+        workIn: "",
+        subject: "",
+        priority: "major",
+        body: "",
+      });
+      setScreen("inbox");
+    } catch (e) {
+      setSendError(String(e?.message || e));
+    } finally {
+      setSendLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900 p-4 text-white font-sans">
-      {/* Subscription and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        {/* Subscription */}
-        <div className="flex flex-col md:flex-row items-center bg-gray-800 rounded-lg p-4 md:w-auto w-full">
-          <div>
-            <p className="text-lg font-semibold">Subscription</p>
-            <p className="text-sm text-gray-400">6 months | till 5th sep 2023</p>
+    <div className="min-h-screen w-full bg-[#0f0f0f] text-white">
+      <div className="mx-auto max-w-[1280px] px-4 py-5 space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl grid place-items-center bg-[#ffe2a7]">
+            <Mail className="text-black" size={22} />
           </div>
-          <div className="ml-auto mt-2 md:mt-0 bg-gray-700 rounded-md px-4 py-2 text-lg font-mono tracking-wide">
-            16 D : 3 H : 33 M
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-3 flex-wrap justify-center">
-          <button className="bg-orange-500 hover:bg-orange-600 transition px-6 py-2 rounded-full font-semibold flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            Ban
-          </button>
-          <button className="bg-red-700 hover:bg-red-800 transition px-6 py-2 rounded-full font-semibold flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-            Delete
-          </button>
-          <button className="bg-gray-700 hover:bg-gray-600 transition px-6 py-2 rounded-full font-semibold flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round"d="M11 17h2m-1-6v6m-7 4v-2a2 2 0 012-2h2a2 2 0 012 2v2m7-4v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2"/></svg>
-            Modify
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-6">
-        {/* Loyalty */}
-        <div className="bg-yellow-400 rounded-lg p-4 flex flex-col justify-between min-w-[120px]">
           <div>
-            <div className="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              <span className="font-semibold text-white">Loyalty</span>
+            <div className="text-xl font-semibold">
+              {screen === "compose" ? "team messages sent" : "Receiving messages sent to bogo"}
             </div>
-            <p className="text-3xl font-bold mt-2 text-white">150</p>
-          </div>
-        </div>
-
-        {/* Reviews */}
-        <div className="bg-blue-500 rounded-lg p-4 flex flex-col justify-between min-w-[120px]">
-          <div>
-            <div className="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 8h2a2 2 0 012 2v4a2 2 0 01-2 2h-2m-6 0h6m-6-4h6M15 12h-2a2 2 0 00-2 2v2"/></svg>
-              <span className="font-semibold text-white">Reviews</span>
-            </div>
-            <p className="text-3xl font-bold mt-2 text-white">01</p>
-          </div>
-        </div>
-
-        {/* Reservation */}
-        <div className="bg-purple-700 rounded-lg p-4 flex flex-col justify-between min-w-[120px]">
-          <div>
-            <div className="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3v18l7-3 7 3V3H5z"/></svg>
-              <span className="font-semibold text-white">Reservation</span>
-            </div>
-            <p className="text-3xl font-bold mt-2 text-white">20</p>
-          </div>
-        </div>
-
-        {/* Total Orders */}
-        <div className="bg-orange-400 rounded-lg p-4 flex flex-col justify-between min-w-[120px]">
-          <div>
-            <div className="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h16v10H4z"/></svg>
-              <span className="font-semibold text-white">Total orders</span>
-            </div>
-            <p className="text-3xl font-bold mt-2 text-white">150</p>
-          </div>
-        </div>
-
-        {/* Revenue */}
-        <div className="bg-green-400 rounded-lg p-4 flex flex-col justify-between min-w-[120px]">
-          <div>
-            <div className="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
-              <span className="font-semibold text-white">Revenue</span>
-            </div>
-            <p className="text-3xl font-bold mt-2 text-white">5600 DA</p>
-          </div>
-          <p className="text-white text-sm mt-1">+ 10%</p>
-          <div className="w-full mt-2 h-8">
-            {/* Graph line can be added here later if needed */}
-            <svg className="w-full h-full" viewBox="0 0 100 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polyline points="0,10 20,4 40,8 60,2 80,10 100,6" stroke="white" strokeWidth="2" fill="none" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Total Views */}
-      <div className="bg-gray-800 rounded-lg p-6 mb-6 flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-lg">Total views</h3>
-          <p className="text-4xl font-bold">12,75K</p>
-        </div>
-        <div className="mt-4 md:mt-0 p-2 rounded bg-gray-700 w-28 text-center font-medium text-blue-400">45%</div>
-        <p className="mt-2 md:mt-0 text-gray-400 font-semibold md:ml-6">
-          Growth in reviews on this year
-        </p>
-      </div>
-
-      {/* Main Flex Container */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Panel */}
-        <div className="flex flex-col gap-6 lg:w-1/3 bg-gray-800 rounded-lg p-5">
-          {/* Status */}
-          <div>
-            <span className="bg-green-600 text-xs px-2 py-1 rounded-full font-semibold uppercase tracking-wide">Active</span>
-          </div>
-          {/* Logo */}
-          <div className="flex flex-col items-center bg-gray-700 rounded-lg p-6">
-            <div className="text-5xl font-extrabold text-indigo-400 tracking-widest">LO</div>
-            <div className="text-5xl font-extrabold text-indigo-300 tracking-widest">GO</div>
-            <p className="text-center mt-1 text-gray-400 italic">Store name</p>
-            <p className="text-center text-gray-600 text-sm">company</p>
-          </div>
-
-          {/* QR Code Box */}
-          <div className="bg-gray-700 rounded-lg p-4 flex flex-col items-center">
-            <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=4557"
-              alt="QR code"
-              className="w-24 h-24 mb-3"
-            />
-            <div className="bg-gray-900 rounded-md px-4 py-2 w-full text-center font-semibold text-lg tracking-widest">
-              code 4557
+            <div className="text-xs opacity-60">
+              {BASE_URL ? "connected to API" : "demo mode (no API base URL)"}
             </div>
           </div>
-
-          {/* Info Section */}
-          <div className="text-gray-300 text-sm space-y-1">
-            <p><strong>info</strong></p>
-            <ul className="list-disc ml-5">
-              <li>azri abdessar</li>
-              <li>bibi hotel</li>
-              <li>azri@gmail.com</li>
-              <li>05555555555</li>
-            </ul>
-          </div>
-
-          {/* Average Rating */}
-          <div>
-            <p className="text-gray-300 font-semibold">Average Rating</p>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-yellow-400 font-bold">4.0</span>
-              <div className="flex text-yellow-400">
-                {Array(5)
-                  .fill(0)
-                  .map((_, i) => (
-                    <svg
-                      key={i}
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`h-5 w-5 ${i < 4 ? "fill-current" : "fill-current text-yellow-300"}`}
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.49 6.91l6.572-.955L10 0l2.938 5.955 6.572.955-4.755 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
-              </div>
-            </div>
-            <p className="text-gray-500 text-xs mt-1 italic">Average rating on this year</p>
-          </div>
-
-          {/* Information */}
-          <div className="text-gray-400 text-sm leading-relaxed">
-            <p><strong>Information</strong></p>
-            <p>
-              Black Panther (attached forever will Tell about the Wonderful places above and beyond the Nur Oaza lift in the middle of the sad atmosphere they felt.
-            </p>
-          </div>
-        </div>
-
-        {/* Right Panel */}
-        <div className="lg:w-2/3 bg-gray-800 rounded-lg p-6 flex flex-col gap-6">
-          {/* NFC Reader and Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3 bg-gray-700 rounded-full px-4 py-2">
-              <label htmlFor="nfc-toggle" className="text-sm font-semibold select-none">NFC Reader</label>
-              <input
-                type="checkbox"
-                id="nfc-toggle"
-                className="toggle toggle-primary cursor-pointer h-6 w-12 rounded-full bg-gray-500 checked:bg-green-400 relative"
-                style={{ WebkitAppearance: "none" }}
-              />
-            </div>
-
-            <div className="flex gap-3 flex-wrap justify-center">
-              <button className="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-full font-semibold transition">
-                Test NFC
+          <div className="ml-auto">
+            {screen === "compose" && (
+              <button
+                onClick={() => setScreen("inbox")}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-white/10"
+              >
+                <ArrowLeft size={16} /> back to inbox
               </button>
-              <button className="bg-orange-600 hover:bg-orange-700 px-5 py-2 rounded-full font-semibold transition">
-                Disable NFC
-              </button>
-            </div>
-          </div>
-
-          {/* QR Code Display */}
-          <div className="bg-gray-900 rounded-lg p-6 flex flex-col items-center justify-center">
-            <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=4557"
-              alt="Large QR Code"
-              className="w-48 h-48 sm:w-56 sm:h-56"
-            />
-          </div>
-
-          {/* Print and Generate Buttons */}
-          <div className="flex gap-4 justify-center flex-wrap">
-            <button className="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-full font-semibold transition">Print QR</button>
-            <button className="bg-orange-600 hover:bg-orange-700 px-6 py-2 rounded-full font-semibold transition">Generate New</button>
-          </div>
-
-          {/* Code Input & Edit */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-            <input
-              type="text"
-              readOnly
-              value="4557"
-              className="bg-gray-700 rounded-full px-6 py-3 text-center font-bold text-xl tracking-widest w-48 sm:w-auto"
-            />
-            <button className="bg-orange-600 hover:bg-orange-700 p-3 rounded-full font-semibold transition" aria-label="Edit code">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M16.5 4.5a2.121 2.121 0 113 3L7 20H4v-3L16.5 4.5z" />
-              </svg>
-            </button>
-          </div>
-
-          {/* NFC and Download buttons */}
-          <div className="flex justify-center gap-4 flex-wrap mt-4">
-            <button className="bg-purple-600 hover:bg-purple-700 px-7 py-3 rounded-full font-semibold transition">Download QR</button>
-            <button className="bg-yellow-500 hover:bg-yellow-600 px-7 py-3 rounded-full font-semibold transition">Write NFC</button>
+            )}
           </div>
         </div>
+
+        {screen === "compose" ? (
+          <ComposeForm
+            form={form}
+            setForm={setForm}
+            onSend={handleSend}
+            loading={sendLoading}
+            error={sendError}
+          />
+        ) : (
+          <InboxScreen
+            activeTab={activeTab}
+            setActiveTab={(v) => {
+              setActiveTab(v);
+              setSelectedId(null);
+            }}
+            activeFolder={activeFolder}
+            setActiveFolder={(v) => {
+              setActiveFolder(v);
+              setSelectedId(null);
+            }}
+            list={list}
+            listLoading={listLoading}
+            listError={listError}
+            selected={selected}
+            detailLoading={detailLoading}
+            detailError={detailError}
+            setSelectedId={setSelectedId}
+            openCompose={() => setScreen("compose")}
+          />
+        )}
       </div>
     </div>
   );
-};
+}
 
-export default LiveChat;
+/* ================= INBOX SCREEN ================= */
+function InboxScreen({
+  activeTab,
+  setActiveTab,
+  activeFolder,
+  setActiveFolder,
+  list,
+  listLoading,
+  listError,
+  selected,
+  detailLoading,
+  detailError,
+  setSelectedId,
+  openCompose,
+}) {
+  const TabBtn = ({ label, value }) => (
+    <button
+      onClick={() => setActiveTab(value)}
+      className={`px-5 h-12 rounded-t-lg border-b-2 ${
+        activeTab === value
+          ? "border-[#8BC255] bg-[#1c1c1c]"
+          : "border-transparent hover:bg-[#1c1c1c]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const FolderBtn = ({ icon: Icon, label, value }) => (
+    <button
+      onClick={() => setActiveFolder(value)}
+      className={`w-full flex items-center gap-3 px-3 h-10 rounded-md text-sm ${
+        activeFolder === value
+          ? "bg-white/10 text-white"
+          : "text-white/70 hover:bg-white/5"
+      }`}
+    >
+      <Icon size={16} />
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Tabs */}
+      <div className="flex items-end gap-3">
+        <TabBtn label="Customers" value="customers" />
+        <TabBtn label="Merchants" value="merchants" />
+        <TabBtn label="Investor partner" value="investors" />
+        <button
+          onClick={openCompose}
+          className="ml-auto inline-flex items-center gap-2 h-12 px-5 rounded-lg bg-[#ffc526] text-black"
+        >
+          <Plus size={16} /> new message
+        </button>
+      </div>
+
+      {/* 3-column layout */}
+      <div className="grid grid-cols-[220px_360px_minmax(0,1fr)] gap-4">
+        {/* Folders */}
+        <aside className="rounded-lg bg-[#1a1a1a] border border-white/10 p-3">
+          <div className="text-sm font-semibold mb-2 opacity-80">Inbox</div>
+          <div className="space-y-2">
+            <FolderBtn icon={Mail} label="Inbox" value="inbox" />
+            <FolderBtn icon={Send} label="Sent emails" value="sent" />
+            <FolderBtn icon={Star} label="Important emails" value="important" />
+            <FolderBtn icon={Clock} label="Snooze" value="snooze" />
+            <FolderBtn icon={Trash2} label="Trash" value="trash" />
+          </div>
+        </aside>
+
+        {/* List */}
+        <section className="rounded-lg bg-[#1a1a1a] border border-white/10 overflow-hidden">
+          <div className="px-3 py-2 text-xs opacity-60 flex items-center justify-between border-b border-white/10">
+            <span>{activeFolder}</span>
+            <span>
+              {listLoading ? "Loading…" : listError ? "Error" : `${list.length} messages`}
+            </span>
+          </div>
+
+          {listError ? (
+            <div className="p-4 text-sm text-red-300">Error: {listError}</div>
+          ) : listLoading ? (
+            <div className="p-4 text-sm opacity-70">Loading messages…</div>
+          ) : (
+            <div className="divide-y divide-white/10">
+              {list.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedId(m.id)}
+                  className="w-full text-left p-3 flex gap-3 hover:bg-white/5"
+                >
+                  <div className="h-10 w-10 rounded-full bg-[#333] grid place-items-center text-sm">
+                    {m.from?.[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="font-semibold truncate">{m.from}</div>
+                      <div className="text-[11px] opacity-60 shrink-0">{m.time}</div>
+                    </div>
+                    <div className="truncate text-sm opacity-90">{m.subject}</div>
+                    <div className="truncate text-xs opacity-60">
+                      {(m.body || "").replace(/\n/g, " ")}
+                    </div>
+                  </div>
+                </button>
+              ))}
+              {list.length === 0 && !listLoading && (
+                <div className="p-6 text-sm opacity-70">No messages in this folder.</div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Reader */}
+        <section className="rounded-lg bg-[#1a1a1a] border border-white/10 overflow-hidden flex flex-col">
+          {detailError ? (
+            <div className="p-6 text-sm text-red-300">Error: {detailError}</div>
+          ) : detailLoading ? (
+            <div className="p-6 text-sm opacity-70">Loading message…</div>
+          ) : !selected ? (
+            <div className="p-6 opacity-70 text-sm">Select a message to read</div>
+          ) : (
+            <>
+              <div className="p-4 border-b border-white/10">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-full bg-[#333] grid place-items-center text-sm">
+                      {selected.from?.[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{selected.from}</div>
+                      <div className="text-xs opacity-60 truncate">{selected.email}</div>
+                    </div>
+                  </div>
+                  <div className="text-xs opacity-60">{selected.time}</div>
+                </div>
+                <div className="mt-3 text-base font-semibold">{selected.subject}</div>
+              </div>
+
+              <div className="p-4 space-y-4 flex-1 overflow-auto">
+                <pre className="whitespace-pre-wrap text-sm leading-6 opacity-90">
+                  {selected.body}
+                </pre>
+                {selected.attachments?.length ? (
+                  <div className="pt-2">
+                    <div className="text-xs opacity-60 mb-2">Attachment</div>
+                    <div className="flex flex-wrap gap-2">
+                      {selected.attachments.map((a) => (
+                        <span
+                          key={a}
+                          className="inline-flex items-center gap-2 px-3 h-8 rounded-full bg-white/10 text-xs"
+                        >
+                          <Paperclip size={14} /> {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* mini composer (reply) — wire to your API if needed */}
+              <div className="p-3 border-t border-white/10">
+                <div className="flex items-center gap-2">
+                  <input
+                    className="flex-1 h-10 rounded-md bg-[#0f0f0f] border border-white/10 px-3 text-sm outline-none"
+                    placeholder="Type message..."
+                  />
+                  <button className="h-10 px-4 rounded-md bg-[#6d4aff] text-sm inline-flex items-center gap-2">
+                    <Send size={14} /> Send
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/* ================= COMPOSE FORM ================= */
+function ComposeForm({ form, setForm, onSend, loading, error }) {
+  const Field = ({ label, children }) => (
+    <label className="block">
+      <span className="text-[12px] opacity-80">{label}</span>
+      {children}
+    </label>
+  );
+  const Input = (props) => (
+    <input
+      {...props}
+      className="w-full h-11 rounded-xl bg-[#151515] border border-white/10 px-3 outline-none text-sm"
+    />
+  );
+
+  return (
+    <div className="rounded-lg bg-[#1a1a1a] border border-white/10 p-5">
+      {error ? <div className="mb-3 text-sm text-red-300">Error: {error}</div> : null}
+      <div className="grid grid-cols-2 gap-5">
+        <Field label="Customer">
+          <Input value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })} />
+        </Field>
+        <Field label="work in">
+          <Input value={form.workIn} onChange={(e) => setForm({ ...form, workIn: e.target.value })} />
+        </Field>
+
+        <Field label="send to">
+          <Input value={form.sendTo} onChange={(e) => setForm({ ...form, sendTo: e.target.value })} />
+        </Field>
+        <Field label="Subject">
+          <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+        </Field>
+
+        <Field label="the mission">
+          <Input value={form.mission} onChange={(e) => setForm({ ...form, mission: e.target.value })} />
+        </Field>
+
+        <Field label="Priority">
+          <div className="h-11 rounded-xl bg-[#151515] border border-white/10 px-3 flex items-center justify-between">
+            <select
+              value={form.priority}
+              onChange={(e) => setForm({ ...form, priority: e.target.value })}
+              className="bg-transparent outline-none text-sm w-full"
+            >
+              <option value="major">major</option>
+              <option value="normal">normal</option>
+              <option value="low">low</option>
+            </select>
+            <ChevronDown size={16} className="opacity-70" />
+          </div>
+        </Field>
+      </div>
+
+      <div className="mt-5">
+        <textarea
+          rows={6}
+          className="w-full rounded-2xl bg-[#151515] border border-white/10 p-4 outline-none text-sm"
+          placeholder="Write your message..."
+          value={form.body}
+          onChange={(e) => setForm({ ...form, body: e.target.value })}
+        />
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <button
+          onClick={onSend}
+          disabled={loading}
+          className="h-12 px-10 rounded-full bg-[#8BC255] text-black font-medium disabled:opacity-60"
+        >
+          {loading ? "sending…" : "send"}
+        </button>
+      </div>
+    </div>
+  );
+}
