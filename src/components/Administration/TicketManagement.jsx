@@ -1,3 +1,6 @@
+// =============================
+// File: src/components/Administration/TicketManagement.jsx
+// =============================
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -32,7 +35,6 @@ const COLORS = {
   teal: "#10b981",
 };
 
-/* ======================================================================= */
 export default function TicketManagement() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -108,13 +110,14 @@ export default function TicketManagement() {
           <div
             role="button"
             tabIndex={0}
-            onClick={() => navigate("/dashboard/ticket-management/settings")}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && navigate("/dashboard/ticket-management/settings")}
+            onClick={() => navigate("/dashboard/ticket-management/Auto-ticket-delivery")}
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && navigate("/dashboard/ticket-management/auto-ticket-delivery")}
             className="rounded-md border border-white/10 p-3 flex flex-col items-center justify-between cursor-pointer hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/20"
             style={{ width: 280, height: 186, background: "#292929" }}
+            aria-label="Open Ticket Settings"
           >
             <img src={CARD4_IMG} alt="settings" className="h-40 w-40 object-contain" />
-            <div className="text-sm opacity-80 mt-2">ticket Settings</div>
+            <div className="text-sm opacity-80 mt-2">Ticket Settings</div>
           </div>
         </div>
 
@@ -127,13 +130,14 @@ export default function TicketManagement() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search"
+                aria-label="Search users"
                 className="bg-transparent outline-none text-sm w-full placeholder:text-white/40"
               />
             </div>
           </div>
 
           <div className="flex-1" />
-          <button className="h-11 px-5 rounded-full bg-[#FFB020] text-white font-semibold flex items-center gap-2">
+          <button type="button" className="h-11 px-5 rounded-full bg-[#FFB020] text-white font-semibold flex items-center gap-2">
             <span className="text-lg leading-none">+</span>
             <span>send ticket</span>
           </button>
@@ -178,7 +182,12 @@ export default function TicketManagement() {
                   <Td className="bg-[#181818]">{u.plan}</Td>
                   <Td className="pr-4 bg-[#292929]">
                     <div className="w-full flex justify-end">
-                      <button className="h-9 w-16 rounded-full bg-white text-black grid place-items-center">
+                      <button
+                        type="button"
+                        className="h-9 w-16 rounded-full bg:white text-black grid place-items-center"
+                        onClick={() => navigate(`/dashboard/ticket-management/auto-ticket-delivery`)}
+                        aria-label={`Open settings for ${u.name}`}
+                      >
                         <span className="text-base">➜</span>
                       </button>
                     </div>
@@ -274,3 +283,9 @@ const Td = ({ children, className = "", mono = false }) => (
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
+
+// =============================
+// File: src/components/Administration/AutoTicketDelivery.jsx
+// =============================
+
+

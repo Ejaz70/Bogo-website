@@ -1,3 +1,6 @@
+// =============================
+// File: src/App.jsx
+// =============================
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -25,11 +28,7 @@ import XPpointManagement from "./components/Administration/XPpointManagement";
 import AppManagement from "./components/Administration/AppManagement";
 import OffersManagement from "./components/Administration/OffersManagement";
 import Newmerchants from "./components/Administration/Newmerchants";
-// ✅ NEW: Keywords Ad detail screen
 import KeywordAdDetails from "./components/Administration/KeywordAdDetails";
-// ✅ NEW: Auto Ticket Delivery screen (Ticket Settings → detail)
-// import AutoTicketDelivery from "./components/Administration/AutoTicketDelivery";
-
 
 // ===== Dashboard Shell & Home =====
 import DashboardHome from "./components/Administration/DashboardHome";
@@ -98,13 +97,8 @@ export default function App() {
           <Route path="ads-management" element={<AdsManagement />} />
           <Route path="ads-management/keywords/:id" element={<KeywordAdDetails />} />
 
-          {/* Ticket Management + NEW Auto Ticket Delivery detail */}
+          {/* Ticket Management + Auto Ticket Delivery detail */}
           <Route path="ticket-management" element={<TicketManagement />} />
-          {/* When user clicks the ticket settings card, navigate to this */}
-           {/* <Route path="ticket-management/auto-ticket-delivery" element={<AutoTicketDelivery />} /> */}
-           
-           {/* <Route path="/ticket-management/auto-ticket-delivery" element={<AutoTicketDelivery />} /> */}
-
 
           <Route path="affiliate" element={<Affiliate />} />
           <Route path="xp-management" element={<XPpointManagement />} />
